@@ -23,57 +23,59 @@ MAKEFLAGS += --no-builtin-rules
 -include .env
 .EXPORT_ALL_VARIABLES: ;
 
-# Specify project name (used to prefix docker images names)
-PROJECT := monorepo
+# Include the config
+-include config.mk
+config.mk:
+	@echo "PROJECT := ${shell basename ${PWD}}" > config.mk
 
-# Specify which docker registry is to be used
+# Docker registry to be used
 DOCKER_REGISTRY := $(or ${DOCKER_REGISTRY},${DOCKER_REGISTRY},docker.io)
 
 # Specify which docker tag is to be used
 DOCKER_TAG := $(or ${DOCKER_TAG},${DOCKER_TAG},latest)
 
 # Which command is used to build docker images
-DOCKER_BUILD_CMD := docker buildx build
+DOCKER_BUILD := $(or ${DOCKER_BUILD},${DOCKER_BUILD},docker buildx build)
+
+# Which command is used for docker-compose (you can switch from 'docker-compose' to 'docker compose')
+# by overriding this in your config.mk
+DOCKER_COMPOSE := $(or ${DOCKER_COMPOSE},${DOCKER_COMPOSE},docker-compose)
 
 # Docker build extra options for all builds (optional)
 DOCKER_BUILD_ARGS :=
 
-## This is the list of components present in the project that will require a docker build
-BUILD_COMPONENTS := $(shell find * -name "Dockerfile" -maxdepth 1 -exec dirname {} \;)
-
-## This is the list of docker components present in the docker-compose project.
-## Usually this contains the list of the project components + extras (mysql, postgresql, elasticsearch)
-## that don't require a build
-DOCKER_COMPONENTS := ${BUILD_COMPONENTS} mysql
-
-## What components should be started when doing a make up/make restart
-## Here we usually list only the "top" components. We indeed delegate to docker-compose
-## to decide what is the full list. Example: if we have an api, and a database, we make sure
-## that the api lists the database as a dependency (via depends_on in docker-compose files)
-## and we only list the api in the list of UP_COMPONENTS
-UP_COMPONENTS := api
+## The list of components being docker based (= component folder includes a Dockerfile)
+DOCKER_COMPONENTS := $(shell find * -name "Dockerfile" -maxdepth 1 -exec dirname {} \;)
 
 ################################################################################
 ### Images rules
 ###
 .PHONY: images clean push-images pull-images
 
-images: $(addsuffix .image,$(BUILD_COMPONENTS))
-clean: $(addsuffix .clean,$(BUILD_COMPONENTS))
+images: $(addsuffix .image,$(DOCKER_COMPONENTS))
+clean: $(addsuffix .clean,$(DOCKER_COMPONENTS))
 
 # Pushes all docker images of all components to the private registry
 #
 # An individual .push task exists on each component as well
-push-images: $(addsuffix .push,$(BUILD_COMPONENTS))
+push-images: $(addsuffix .push,$(DOCKER_COMPONENTS))
 
 # Pulls all docker images of all components from the private registry
 #
 # An individual .pull task exists on each component as well
-pull-images: $(addsuffix .pull,$(BUILD_COMPONENTS))
+pull-images: $(addsuffix .pull,$(DOCKER_COMPONENTS))
 
 define make-image-targets
 
 .PHONY: $1.clean $1.push $1.pull
+
+## docker build context is overridable but defaults to the component folder
+## Example of override:
+##
+## tests/makefile.mk:
+##
+## tests_DOCKER_CONTEXT = ./
+$1_DOCKER_CONTEXT := $(or ${$1_DOCKER_CONTEXT},${$1_DOCKER_CONTEXT},$1)
 
 # Remove docker build assets
 $1.clean:
@@ -83,9 +85,8 @@ $1.clean:
 $1.image:: .build/$1/Dockerfile.built
 .build/$1/Dockerfile.built: $1/Dockerfile $(shell git ls-files $1)
 	@mkdir -p .build/$1
-	@echo
 	@echo -e "--- Building $(PROJECT)/$1:${DOCKER_TAG} ---"
-	${DOCKER_BUILD_CMD} ${DOCKER_BUILD_ARGS} -f $1/Dockerfile -t $(PROJECT)/$1:${DOCKER_TAG} ./$1 | tee .build/$1/Dockerfile.log
+	${DOCKER_BUILD} ${DOCKER_BUILD_ARGS} -f $1/Dockerfile -t $(PROJECT)/$1:${DOCKER_TAG} $${$1_DOCKER_CONTEXT} | tee .build/$1/Dockerfile.log
 	touch .build/$1/Dockerfile.built
 
 # Components can have dependencies on others thanks to the <t>_DEPS variables
@@ -109,9 +110,8 @@ $1.push: .build/$1/Dockerfile.pushed
 $1.pull::
 	docker pull $(DOCKER_REGISTRY)/$(PROJECT)/$1:${DOCKER_TAG}
 	docker tag $(DOCKER_REGISTRY)/$(PROJECT)/$1:${DOCKER_TAG} ${PROJECT}/$1:${DOCKER_TAG}
-
 endef
-# $(foreach component,$(BUILD_COMPONENTS),$(eval $(call make-image-targets,$(component))))
+$(foreach component,$(DOCKER_COMPONENTS),$(eval $(call make-image-targets,$(component))))
 
 ################################################################################
 ### Lifecycle rules
@@ -121,33 +121,33 @@ endef
 
 # Shortcut over docker-compose ps
 ps:
-	docker-compose ps
+	$(DOCKER_COMPOSE) ps
 
 # Puts the software up.
 #
-up: $(addsuffix .image,$(BUILD_COMPONENTS))
-up: $(addsuffix .up,$(UP_COMPONENTS))
+up: $(addsuffix .image,$(DOCKER_COMPONENTS))
 up:
-	docker-compose ps
+	$(DOCKER_COMPOSE) up -d
+	$(DOCKER_COMPOSE) ps
 
 # Restarts the software without rebuilding images
 #
 # Faster than up
-restart: $(addsuffix .restart,$(DOCKER_COMPONENTS))
-	docker-compose ps
+restart:
+	$(DOCKER_COMPOSE) restart
 
 # Puts the entire software down.
 #
 # All docker containers are stopped.
 down:
-	docker-compose stop
+	$(DOCKER_COMPOSE) stop
 
 define make-lifecycle-targets
 .PHONY: $1.down $1.image $1.up $1.on $1.off $1.restart $1.logs $1.bash
 
 # Shuts the component down
 $1.down:
-	docker-compose stop $1
+	$(DOCKER_COMPOSE) stop $1
 
 # Builds the image
 # We create an empty rule for all DOCKER_COMPONENTS
@@ -156,35 +156,27 @@ $1.image::
 
 # Wakes the component up
 $1.up: $1.image
-	docker-compose up -d --force-recreate $1
+	$(DOCKER_COMPOSE) up -d --force-recreate $1
 
 # Wakes the component up using the last known image
 $1.on:
-	docker-compose up -d $1
+	$(DOCKER_COMPOSE) up -d $1
 
 # Alias for down
 $1.off:
-	docker-compose stop $1
+	$(DOCKER_COMPOSE) stop $1
 
 # Restart the component the light way, i.e. without rebuilding the image
 $1.restart:
-	docker-compose stop $1
-	docker-compose up -d $1
+	$(DOCKER_COMPOSE) stop $1
+	$(DOCKER_COMPOSE) up -d $1
 
 # SHow the logs in --follow mode
 $1.logs:
-	docker-compose logs -f $1
+	$(DOCKER_COMPOSE) logs -f $1
 
 # Opens a bash on the component
 $1.bash:
-	docker-compose exec $1 bash
+	$(DOCKER_COMPOSE) exec $1 bash
 endef
 $(foreach component,$(DOCKER_COMPONENTS),$(eval $(call make-lifecycle-targets,$(component))))
-
-##
-## For every folder including a Dockerfile, we generate the docker rules (build, push, pull)
-##
-.build/docker.mk: $(BUILD_COMPONENTS)
-	@( $(foreach M,$?,echo -e '$$(eval $$(call make-image-targets,$M))';) ) > $@
--include .build/docker.mk
-

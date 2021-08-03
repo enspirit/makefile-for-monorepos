@@ -1,0 +1,8 @@
+services:
+
+  tests:
+    image: monorepo/tests
+    volumes:
+      - ./:/code
+    entrypoint: ["/usr/bin/tail"]
+    command: ["-f", "/dev/null"]

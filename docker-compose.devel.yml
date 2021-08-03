@@ -1,4 +1,4 @@
 services:
 
   api:
-    env_file: ./api/devel.env
+    env_file: ./api/env/devel.env
