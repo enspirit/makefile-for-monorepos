@@ -6,6 +6,15 @@ SHELL := bash
 MAKEFLAGS += --warn-undefined-variables
 MAKEFLAGS += --no-builtin-rules
 
+###
+### Generates a dynamic Makefile from the makefile.mk files that can be found
+### in components folders
+###
+.build/bootstrap.mk: $(shell find * -name makefile.mk -maxdepth 1)
+	@mkdir -p .build
+	( $(foreach M,$?,echo '-include $M';) ) > $@
+-include .build/bootstrap.mk
+
 ################################################################################
 ### Config variables
 ###
@@ -77,6 +86,10 @@ $1.image:: .build/$1/Dockerfile.built
 	@echo -e "--- Building $(PROJECT)/$1:${DOCKER_TAG} ---"
 	${DOCKER_BUILD_CMD} ${DOCKER_BUILD_ARGS} -f $1/Dockerfile -t $(PROJECT)/$1:${DOCKER_TAG} ./$1 | tee .build/$1/Dockerfile.log
 	touch .build/$1/Dockerfile.built
+
+# Components can have dependencies on others thanks to the <t>_DEPS variables
+# where <t> is the name of the component
+.build/$1/Dockerfile.built: $(foreach dep,$($1_DEPS),.build/$(dep)/Dockerfile.built)
 
 # Pushes the image to the private repository
 $1.push: .build/$1/Dockerfile.pushed
@@ -166,25 +179,3 @@ $1.bash:
 	docker-compose exec $1 bash
 endef
 $(foreach component,$(DOCKER_COMPONENTS),$(eval $(call make-lifecycle-targets,$(component))))
-
-################################################################################
-### Custom component makefiles
-###
-### Every component can include in their folder a makefile.mk
-### containing custom rules (unit testing for instance)
-###
-define include-custom-makefile
--include $1/makefile.mk
-endef
-$(foreach component,$(BUILD_COMPONENTS),$(eval $(call include-custom-makefile,$(component))))
-
-################################################################################
-### Inter components dependencies
-###
-### Sometimes you have some components depending on others, typically if you have
-### a component used as a base docker image for all other components
-###
-### You can therefore express it so that Make knows what to build, in which order
-### Example: the "api" component depends on the component "base":
-###
-.build/api/Dockerfile.built: .build/base/Dockerfile.built
