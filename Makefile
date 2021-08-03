@@ -39,7 +39,7 @@ DOCKER_BUILD_CMD := docker buildx build
 DOCKER_BUILD_ARGS :=
 
 ## This is the list of components present in the project that will require a docker build
-BUILD_COMPONENTS := base api
+BUILD_COMPONENTS := $(shell find * -name "Dockerfile" -maxdepth 1 -exec dirname {} \;)
 
 ## This is the list of docker components present in the docker-compose project.
 ## Usually this contains the list of the project components + extras (mysql, postgresql, elasticsearch)
@@ -184,7 +184,7 @@ $(foreach component,$(DOCKER_COMPONENTS),$(eval $(call make-lifecycle-targets,$(
 ##
 ## For every folder including a Dockerfile, we generate the docker rules (build, push, pull)
 ##
-.build/docker.mk: $(shell find * -name "Dockerfile" -maxdepth 1 -exec dirname {} \;)
+.build/docker.mk: $(BUILD_COMPONENTS)
 	@( $(foreach M,$?,echo -e '$$(eval $$(call make-image-targets,$M))';) ) > $@
 -include .build/docker.mk
 
