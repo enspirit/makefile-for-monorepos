@@ -1,0 +1,4 @@
+services:
+
+  api:
+    env_file: ./api/devel.env
