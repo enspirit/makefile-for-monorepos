@@ -12,8 +12,16 @@ MAKEFLAGS += --no-builtin-rules
 ###
 .build/bootstrap.mk: $(shell find * -name makefile.mk -maxdepth 1)
 	@mkdir -p .build
-	( $(foreach M,$?,echo '-include $M';) ) > $@
+	@( $(foreach M,$?,echo -e '-include $M';) ) > $@
 -include .build/bootstrap.mk
+
+##
+## For every folder including a Dockerfile, we generate the docker rules (build, push, pull)
+##
+.build/docker.mk: $(shell find * -name "Dockerfile" -maxdepth 1 -exec dirname {} \;)
+	@mkdir -p .build
+	@( $(foreach M,$?,echo -e '-include $M';) ) > $@
+-include .build/docker.mk
 
 ################################################################################
 ### Config variables
