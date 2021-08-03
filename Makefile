@@ -15,14 +15,6 @@ MAKEFLAGS += --no-builtin-rules
 	@( $(foreach M,$?,echo -e '-include $M';) ) > $@
 -include .build/bootstrap.mk
 
-##
-## For every folder including a Dockerfile, we generate the docker rules (build, push, pull)
-##
-.build/docker.mk: $(shell find * -name "Dockerfile" -maxdepth 1 -exec dirname {} \;)
-	@mkdir -p .build
-	@( $(foreach M,$?,echo -e '-include $M';) ) > $@
--include .build/docker.mk
-
 ################################################################################
 ### Config variables
 ###
@@ -80,6 +72,7 @@ push-images: $(addsuffix .push,$(BUILD_COMPONENTS))
 pull-images: $(addsuffix .pull,$(BUILD_COMPONENTS))
 
 define make-image-targets
+
 .PHONY: $1.clean $1.push $1.pull
 
 # Remove docker build assets
@@ -118,7 +111,7 @@ $1.pull::
 	docker tag $(DOCKER_REGISTRY)/$(PROJECT)/$1:${DOCKER_TAG} ${PROJECT}/$1:${DOCKER_TAG}
 
 endef
-$(foreach component,$(BUILD_COMPONENTS),$(eval $(call make-image-targets,$(component))))
+# $(foreach component,$(BUILD_COMPONENTS),$(eval $(call make-image-targets,$(component))))
 
 ################################################################################
 ### Lifecycle rules
@@ -187,3 +180,11 @@ $1.bash:
 	docker-compose exec $1 bash
 endef
 $(foreach component,$(DOCKER_COMPONENTS),$(eval $(call make-lifecycle-targets,$(component))))
+
+##
+## For every folder including a Dockerfile, we generate the docker rules (build, push, pull)
+##
+.build/docker.mk: $(shell find * -name "Dockerfile" -maxdepth 1 -exec dirname {} \;)
+	@( $(foreach M,$?,echo -e '$$(eval $$(call make-image-targets,$M))';) ) > $@
+-include .build/docker.mk
+
