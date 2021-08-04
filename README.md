@@ -272,3 +272,10 @@ In other terms this means that since the recipe that builds our docker image fin
 * if the file is there, it doesn't have to build the image again
 * if our sentinel file is older than our Dockerfile (the prerequisite for our sentinel), then we do need a rebuild.
 
+Our Makefile is using this in the following ways:
+
+* `make {component}.image` uses a prerequisite: `.build/{component}/Dockerfile.built` (a sentinel file)
+* For every component we generate a `.build/{component}/Dockerfile.built` rule.
+* That rule produces the sentinel file after building the image, like in the example above.
+* When listing [inter component dependencies](#inter-component-dependencies) we generate additional prerequisites that use the dependencies' sentinels as prerequisites. This way we can ensure that our dependent images rebuild when their dependencies change.
+* `make {component}.push` is another example of such usage. It lists `.build/{component}/Dockerfile.pushed` as a prerequisite. The rule for it, in turn, lists `.build/{component}/Dockerfile.built` as a prerequisite. This means that if you already pushed your image and that none of its files (nor dependencies) have changed: there is no need to push it again.
