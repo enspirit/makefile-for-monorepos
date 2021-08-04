@@ -2,12 +2,28 @@
 
 ## What is this?
 
-This project is
+This project is providing a reusable Makefile for docker projects organised as monorepositories.
+Everything else next to that Makefile is just us showcasing it's usage and capabilities.
 
 ## Ok for the what. Now, why?
 
+At Enspirit we embraced docker, docker-compose and monorepositories a while ago and our team is usually rotating on 4 to 5 projects at a time.
 
-## How do I use this?
+We wanted a way to have reproducible builds but also a tooling allowing us to work the same way on all these different projects.
+
+This Makefile allows us also to have a single verbiage and we don't have to remember the specific commands of `docker` or `docker-compose`, but also the several tests framework (`mocha`, `rspec`, ...) used or the package managers (`npm`, `gem`, ...).
+
+This Makefile also provides us with an easy way of expressing dependencies between components.
+
+## How?
+
+By following some conventions, the makefile gives us some magic:
+
+If a folder at the top level of the repository directly contains a Dockerfile, Makefile assumes that it is a component of the project & you magically get all the [image rules](#per-component-image-rules) for it.
+
+You use docker-compose? Well, for every single service listed in there you will get all the [lifecycle rules](#per-component-lifecycle-rules) for it.
+
+## How do I try this?
 
 The only thing you need to get started is the Makefile from this repo, nothing else.
 We all love those one-liner installation methods, so here you go: make sure you are inside the folder of your monorepo project and run:
@@ -24,30 +40,38 @@ curl https://raw.githubusercontent.com/enspirit/monorepo-example/master/Makefile
 
 ## Usage:
 
-### General rules
+### General image rules
 
 * `make images`: builds all the docker images for the repo's components
-* `make up`: starts the (docker-compose) project
-* `make down`: stops the (docker-compose) project
-* `make restart`: restarts the (docker-compose) project
-* `make ps`: alias for docker-compose ps
 * `make clean`: removes the sentinel files (see [Sentinel files](#sentinel-files))
+* `make push-images`: pushes all images to the docker registry (after building them if necessary)
+* `make pull-images`: pulls all images from the docker registry
 
-### Per-component rules
+### General lifecycle rules
+
+* `make up`: starts the docker-compose project
+* `make down`: stops the docker-compose project
+* `make restart`: restarts the docker-compose project
+* `make ps`: alias for docker-compose ps
+
+### Per-component image rules
 
 For every docker component in your repo, you can run:
 
 * `make {component}.image`: builds the component's docker image
 * `make {component}.clean`: removes the component's sentinel files (see [Sentinel files](#sentinel-files))
+* `make {component}.pull`: pulls the component image from the docker registry
+* `make {component}.push`: pushes the image to the registry, :warning: it also rebuilds the component if any files or dependencies have changed
+
+### Per-component lifecycle rules
+
 * `make {component}.on`: starts the component
 * `make {component}.off`: stops the component
-* `make {component}.up`: forces the recreation of the container, :warning: it also rebuilds the component if files/dependencies have changed
+* `make {component}.up`: forces the recreation of the container, :warning: it also rebuilds the component's image if any files or dependencies have changed
 * `make {component}.down`: stops the component
 * `make {component}.restart`: restarts the component
-* `make {component}.logs`: tails the logs of the container
-* `make {component}.bash`: gets a bash on the container
-* `make {component}.pull`: pulls the component image from the docker registry
-* `make {component}.push`: pushes the image to the registry, , :warning: it also rebuilds the component if files/dependencies have changed
+* `make {component}.logs`: tails the logs of the component
+* `make {component}.bash`: gets a bash on the component
 
 You might wonder why we have both `make {component}.up` and `make {component}.on`. The reason is that they behave differently: the former will first rebuild the image when needed (if files or dependencies have changed) while the latter is just an alias for `docker-compose up -d component`.
 
@@ -72,13 +96,13 @@ component.image: component/Dockerfile
 
 Well, since `docker build` does not produce any file we don't really have a real target here, it is what is called a [phony target](https://www.gnu.org/software/make/manual/html_node/Phony-Targets.html#Phony-Targets).
 
-And the "problem" with a phony target is that its recipe will be executed every time the rule is run. That is: the example makefile would re-run docker build every single time.
+And the 'problem' with a phony target is that its recipe will be executed every time the rule is called. That is: the example makefile would re-run docker build every single time.
 
 > What's the problem? docker build has a cache mechanism.
 
 Yes and with [buildkit](https://docs.docker.com/develop/develop-images/build_enhancements/) it's getting even better.
 
-But on monorepo with a lot of components we can save previous seconds by not re-running 'docker build' for components that haven't changed. That also allows us to rely on `make up` to decide which components need to rebuild before starting the docker-compose project.
+But on monorepo with a lot of components we can save precious seconds by not re-running 'docker build' for components that haven't changed. That also allows us to rely on `make up` to decide which components need to rebuild before starting the docker-compose project.
 
 > Ok, now what about those sentinels?
 
@@ -106,5 +130,6 @@ Well let's look again at some of make's user manual:
 
 > A normal prerequisite makes two statements: first, it imposes an order in which recipes will be invoked: the recipes for all prerequisites of a target will be completed before the recipe for the target is run. Second, it imposes a dependency relationship: if any prerequisite is newer than the target, then the target is considered out-of-date and must be rebuilt.
 
-In other terms this means that since the recipe that builds our docker image finishes by touching the sentinel file, make will 1) know that if the file is there we don't need to build the image 2) that if our sentinel file is older than our Dockerfile (the prerequisite for our sentinel) then we do need a rebuild.
-
+In other terms this means that since the recipe that builds our docker image finishes by touching the sentinel file, make will know:
+* that if the file is there, it doesn't have to build the image again
+* that if our sentinel file is older than our Dockerfile (the prerequisite for our sentinel), then we do need a rebuild.

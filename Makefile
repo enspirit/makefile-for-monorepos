@@ -47,8 +47,11 @@ DOCKER_BUILD_ARGS :=
 ## The list of components being docker based (= component folder includes a Dockerfile)
 DOCKER_COMPONENTS := $(shell find * -name "Dockerfile" -maxdepth 1 -exec dirname {} \;)
 
+## The list of services defined in the (enabled) docker-compose files
+COMPOSE_SERVICES := $(shell $(DOCKER_COMPOSE) config --services)
+
 ################################################################################
-### Images rules
+### Image rules
 ###
 .PHONY: images clean push-images pull-images
 
@@ -65,7 +68,7 @@ push-images: $(addsuffix .push,$(DOCKER_COMPONENTS))
 # An individual .pull task exists on each component as well
 pull-images: $(addsuffix .pull,$(DOCKER_COMPONENTS))
 
-define make-image-targets
+define make-component-rules
 
 .PHONY: $1.clean $1.push $1.pull
 
@@ -111,7 +114,7 @@ $1.pull::
 	docker pull $(DOCKER_REGISTRY)/$(PROJECT)/$1:${DOCKER_TAG}
 	docker tag $(DOCKER_REGISTRY)/$(PROJECT)/$1:${DOCKER_TAG} ${PROJECT}/$1:${DOCKER_TAG}
 endef
-$(foreach component,$(DOCKER_COMPONENTS),$(eval $(call make-image-targets,$(component))))
+$(foreach component,$(DOCKER_COMPONENTS),$(eval $(call make-component-rules,$(component))))
 
 ################################################################################
 ### Lifecycle rules
@@ -142,7 +145,7 @@ restart:
 down:
 	$(DOCKER_COMPOSE) stop
 
-define make-lifecycle-targets
+define make-lifecycle-rules
 .PHONY: $1.down $1.image $1.up $1.on $1.off $1.restart $1.logs $1.bash
 
 # Shuts the component down
@@ -179,4 +182,4 @@ $1.logs:
 $1.bash:
 	$(DOCKER_COMPOSE) exec $1 bash
 endef
-$(foreach component,$(DOCKER_COMPONENTS),$(eval $(call make-lifecycle-targets,$(component))))
+$(foreach component,$(COMPOSE_SERVICES),$(eval $(call make-lifecycle-rules,$(component))))

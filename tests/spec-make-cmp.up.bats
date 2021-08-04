@@ -11,3 +11,16 @@ load test_helper
   make api.up
   has_upped api
 }
+
+@test "'make <comp>.up' fails for components not present in docker-compose" {
+  run make base.up
+  [ "$status" -eq 2 ]
+  echo $output | grep "No rule to make target"
+}
+
+@test "'make <comp>.up' fails for unknown components" {
+  run make unknown.up
+  [ "$status" -eq 2 ]
+  echo $output | grep "No rule to make target"
+}
+

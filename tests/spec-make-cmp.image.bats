@@ -11,7 +11,7 @@ load test_helper
 @test "'make <comp>.image' fails for unknown components" {
   run make unknown.image
   [ "$status" -eq 2 ]
-  echo $output | grep "No rule to make target 'unknown.image'"
+  echo $output | grep "No rule to make target"
 }
 
 @test "'make <comp>.image' builds dependencies first" {

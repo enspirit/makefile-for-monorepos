@@ -27,6 +27,11 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+## Asking for the list of components?
+if [ "$COMMAND" == "config" ]; then
+  echo "api tests"
+fi
+
 echo "command=$COMMAND,component=$COMPONENT" >> ./tests/docker-compose.log
 
 exit 0
