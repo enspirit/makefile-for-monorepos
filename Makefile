@@ -181,7 +181,8 @@ $1.logs:
 	@$(DOCKER_COMPOSE) logs -f $1
 
 # Opens a bash on the component
+$1_SHELL := $(or ${$1_SHELL},${$1_SHELL},bash)
 $1.bash:
-	@$(DOCKER_COMPOSE) exec $1 bash
+	@$(DOCKER_COMPOSE) exec $1 $$($1_SHELL)
 endef
 $(foreach component,$(COMPOSE_SERVICES),$(eval $(call make-lifecycle-rules,$(component))))
