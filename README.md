@@ -15,7 +15,7 @@ We try to apply the agile rule saying that only one command is needed to start a
 
 This Makefile is our way of achieving that goal. Why don't you see for yourself:
 
-```
+```bash
 git clone git@github.com:enspirit/monorepo-example.git
 cd monorepo-example
 make up
@@ -91,7 +91,7 @@ Let's take this repository as an example. [We've used "monorepo" as a project na
 You can override other things in your `config.mk` if our defaults are not to your taste. It's as simple as adding a line specifying which variable you want to override and providing its new value.
 
 For instance to use your own private docker registry:
-```
+```make
 PROJECT := monorepo
 DOCKER_REGISTRY := my.private.registry
 ```
@@ -191,7 +191,7 @@ They behave exactly the same way and alias `docker-compose stop component`. It i
 These three rules are placeholder. Their recipe must be implemented in the components' `makefile.mk`.
 
 For example consider the file [api/makefile.mk]:
-```
+```make
 api.tests.unit::
 	@docker run monorepo/api npm run test:unit
 
