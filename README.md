@@ -23,6 +23,8 @@ If a folder at the top level of the repository directly contains a Dockerfile, M
 
 You use docker-compose? Well, for every single service listed in there you will get all the [lifecycle rules](#per-component-lifecycle-rules) for it.
 
+It provides 'magic' but it is still make so you can [configure](#configure-it) things, [override](#overrides-things) them and even [extend](#extend-it) it.
+
 ## How do I try this?
 
 The only thing you need to get started is the Makefile from this repo, nothing else.
