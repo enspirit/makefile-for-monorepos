@@ -138,6 +138,12 @@ As soon as you create one of them it will be included automatically. You can see
 * `make restart`: restarts the docker-compose project
 * `make ps`: alias for docker-compose ps
 
+### General standard rules
+
+* `make tests`: Runs all tests (equivalent to `tests.unit` then `tests.integration`)
+* `make tests.unit`: Runs all unit tests on all components
+* `make tests.integration`: Runs all integration tests on all components
+
 ### Per-component image rules
 
 For every docker component in your repo, you can run:
@@ -162,6 +168,23 @@ You might wonder why we have both `make {component}.up` and `make {component}.on
 > Ok, and the difference between `make {component}.down` and `make {component}.off`?
 
 They behave exactly the same way and alias `docker-compose stop component`. It is just for  consistency: if we can start things with both `up` and `on` one would expect to have both `down` and `off`.
+
+### Per-component standard rules
+
+* `make {component}.tests`: Runs all tests for the component (equivalent to `{component}.tests.unit` then `tests.integration`)
+* `make {component}.tests.unit`: Runs all the component's unit tests
+* `make {component}.tests.integration`: Runs all the component's integration tests
+
+These three rules are placeholder. Their recipe must be implemented in the components' `makefile.mk`.
+
+For example consider the file [api/makefile.mk]:
+```
+api.tests.unit::
+	@docker run monorepo/api npm run test:unit
+
+api.tests.integration::
+	@docker run monorepo/api npm run test:integration
+```
 
 ## Advanced use cases
 

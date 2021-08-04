@@ -34,7 +34,7 @@ pipeline {
       steps {
         container('builder') {
           script {
-            sh 'make tests.run'
+            sh 'make tests'
           }
         }
       }

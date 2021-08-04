@@ -119,6 +119,40 @@ endef
 $(foreach component,$(DOCKER_COMPONENTS),$(eval $(call make-component-rules,$(component))))
 
 ################################################################################
+### Standard rules
+###
+
+.PHONY: tests tests.unit tests.integration
+
+tests: tests.unit tests.integration
+
+# Run unit tests on all components
+#
+# An individual .test.unit task exists on each component as well
+tests.unit: $(addsuffix .tests.unit,$(DOCKER_COMPONENTS))
+
+# Run integration tests on all components
+#
+# An individual .test.integration task exists on each component as well
+tests.integration: $(addsuffix .tests.integration,$(DOCKER_COMPONENTS))
+
+define make-standard-rules
+
+.PHONY: $1.tests $1.tests.unit $1.tests.integration
+
+# Runs all unit and integration tests
+$1.tests: $1.tests.unit $1.tests.integration
+
+# Placeholder for the running of unit tests, you can override that in your component's makefile.mk
+$1.tests.unit:: 
+
+# Placeholder for the running of integration tests, you can override that in your component's makefile.mk
+$1.tests.integration:: 
+
+endef
+$(foreach component,$(DOCKER_COMPONENTS),$(eval $(call make-standard-rules,$(component))))
+
+################################################################################
 ### Lifecycle rules
 ###
 
