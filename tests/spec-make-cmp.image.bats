@@ -60,3 +60,8 @@ load test_helper
   DOCKER_TAG=test make api.image
   has_built monorepo/api:test
 }
+
+@test "'make <comp>.image' builds subcomponents too" {
+  make multiple.engine.image
+  has_built monorepo/multiple.engine
+}

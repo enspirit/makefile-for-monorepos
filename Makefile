@@ -56,6 +56,9 @@ DOCKER_COMPOSE := $(or ${DOCKER_COMPOSE},${DOCKER_COMPOSE},docker-compose)
 ## The list of components being docker based (= component folder includes a Dockerfile)
 DOCKER_COMPONENTS := $(shell find * -name "Dockerfile" -maxdepth 1 -exec dirname {} \;)
 
+## The list of sub-components (= full path of all {component}/Dockerfile.*)
+DOCKER_SUB_COMPONENTS := $(shell find * -name "Dockerfile.*" -maxdepth 1)
+
 ## The list of services defined in the (enabled) docker-compose files
 COMPOSE_SERVICES := $(shell $(DOCKER_COMPOSE) config --services)
 
@@ -82,6 +85,13 @@ images.pull: $(addsuffix .image.pull,$(DOCKER_COMPONENTS))
 # An individual .image.scan task exists on each component as well
 images.scan: $(addsuffix .image.scan,$(DOCKER_COMPONENTS))
 
+###
+### Arguments:
+### $1: component name
+### $2: Dockerfile
+### $3: docker build context
+### $4: (optional) sub component name (should be prefixed with a '.' (dot))
+###
 define make-image-rules
 
 .PHONY: $1.clean $1.image $.image.push $1.image.pull $1.image.scan
@@ -92,51 +102,68 @@ define make-image-rules
 ## tests/makefile.mk:
 ##
 ## tests_DOCKER_CONTEXT = ./
-$1_DOCKER_CONTEXT := $(or ${$1_DOCKER_CONTEXT},${$1_DOCKER_CONTEXT},$1)
+$1$4_DOCKER_CONTEXT := $(or ${$1$4_DOCKER_CONTEXT},${$1$4_DOCKER_CONTEXT},$3)
 
 # Remove docker build assets
-$1.clean::
+$1$4.clean::
 	rm -rf .build/$1
 
 # Build the image and touch the corresponding .log and .built sentinel files
-$1.image:: .build/$1/Dockerfile.built
-.build/$1/Dockerfile.built: $1/Dockerfile $(shell git ls-files $1)
+$1$4.image:: .build/$1/Dockerfile$4.built
+.build/$1/Dockerfile$4.built: $1/$2 $(shell git ls-files $1)
 	@mkdir -p .build/$1
-	@echo -e "--- Building $(PROJECT)/$1:${DOCKER_TAG} ---"
-	@${DOCKER_BUILD} ${DOCKER_BUILD_ARGS} -f $1/Dockerfile -t $(PROJECT)/$1:${DOCKER_TAG} $${$1_DOCKER_CONTEXT} | tee .build/$1/Dockerfile.log
-	@touch .build/$1/Dockerfile.built
+	@echo -e "--- Building $(PROJECT)/$1$4:${DOCKER_TAG} ---"
+	@${DOCKER_BUILD} ${DOCKER_BUILD_ARGS} -f $1/$2 -t $(PROJECT)/$1$4:${DOCKER_TAG} $${$1$4_DOCKER_CONTEXT} | tee .build/$1/Dockerfile$4.log
+	@touch .build/$1/Dockerfile$4.built
 
 # Components can have dependencies on others thanks to the <t>_DEPS variables
 # where <t> is the name of the component
-.build/$1/Dockerfile.built: $(foreach dep,$($1_DEPS),.build/$(dep)/Dockerfile.built)
+.build/$1/Dockerfile$4.built: $(foreach dep,$($1$4_DEPS),.build/$(dep)/Dockerfile.built)
 
 # Scans the image for vulnerabilities
-$1.image.scan:: $1.image
-	@echo -e "--- Scanning $(PROJECT)/$1:${DOCKER_TAG} for vulnerabilities ---"
-	@${DOCKER_SCAN} ${DOCKER_SCAN_ARGS} $(PROJECT)/$1:${DOCKER_TAG} || !${DOCKER_SCAN_FAIL_ON_ERR}
+$1$4.image.scan:: $1$4.image
+	@echo -e "--- Scanning $(PROJECT)/$1$4:${DOCKER_TAG} for vulnerabilities ---"
+	@${DOCKER_SCAN} ${DOCKER_SCAN_ARGS} $(PROJECT)/$1$4:${DOCKER_TAG} || !${DOCKER_SCAN_FAIL_ON_ERR}
 
 # Pushes the image to the private repository
-$1.image.push: .build/$1/Dockerfile.pushed
-.build/$1/Dockerfile.pushed: .build/$1/Dockerfile.built
+$1$4.image.push: .build/$1$4/Dockerfile.pushed
+.build/$1$4/Dockerfile.pushed: .build/$1$4/Dockerfile.built
 	@if [ -z "$(DOCKER_REGISTRY)" ]; then \
 		echo "No private registry defined, ignoring. (set DOCKER_REGISTRY or place it in .env file)"; \
 		return 1; \
 	fi
 	@echo
-	@echo -e "--- Pushing $(DOCKER_REGISTRY)/$(PROJECT)/$1:${DOCKER_TAG} ---"
-	@docker tag $(PROJECT)/$1:${DOCKER_TAG} $(DOCKER_REGISTRY)/$(PROJECT)/$1:${DOCKER_TAG}
-	@docker push $(DOCKER_REGISTRY)/$(PROJECT)/$1:${DOCKER_TAG} | tee -a .build/$1/Dockerfile.push.log
-	@touch .build/$1/Dockerfile.pushed
+	@echo -e "--- Pushing $(DOCKER_REGISTRY)/$(PROJECT)/$1$4:${DOCKER_TAG} ---"
+	@docker tag $(PROJECT)/$1$4:${DOCKER_TAG} $(DOCKER_REGISTRY)/$(PROJECT)/$1$4:${DOCKER_TAG}
+	@docker push $(DOCKER_REGISTRY)/$(PROJECT)/$1$4:${DOCKER_TAG} | tee -a .build/$1/Dockerfile$4.push.log
+	@touch .build/$1/Dockerfile$4.pushed
 
 # Pull the latest image version from the private repository
-$1.image.pull::
+$1$4.pull::
 	@echo
-	@echo -e "--- Pulling $(DOCKER_REGISTRY)/$(PROJECT)/$1:${DOCKER_TAG} as ${PROJECT}/$1:${DOCKER_TAG} ---"
-	@docker pull $(DOCKER_REGISTRY)/$(PROJECT)/$1:${DOCKER_TAG}
-	@docker tag $(DOCKER_REGISTRY)/$(PROJECT)/$1:${DOCKER_TAG} ${PROJECT}/$1:${DOCKER_TAG}
+	@echo -e "--- Pulling $(DOCKER_REGISTRY)/$(PROJECT)/$1$4:${DOCKER_TAG} as ${PROJECT}/$1$4:${DOCKER_TAG} ---"
+	@docker pull $(DOCKER_REGISTRY)/$(PROJECT)/$1$4:${DOCKER_TAG}
+	@docker tag $(DOCKER_REGISTRY)/$(PROJECT)/$1$4:${DOCKER_TAG} ${PROJECT}/$1$4:${DOCKER_TAG}
 
 endef
-$(foreach component,$(DOCKER_COMPONENTS),$(eval $(call make-image-rules,$(component))))
+
+### Generate image rules for each component, using their Dockerfile as well as their folder as build context
+$(foreach component,$(DOCKER_COMPONENTS),$(eval $(call make-image-rules,$(component),Dockerfile,$(component))))
+
+### Generate image rules for each subcomponent, using their Dockerfile, their folder as build context and their suffix
+$(foreach subcmp,$(DOCKER_SUB_COMPONENTS),\
+	$(eval $(call make-image-rules,$(shell dirname $(subcmp)),$(notdir $(subcmp)),$(shell dirname $(subcmp)),$(suffix $(subcmp)))))
+
+debug: multiple/Dockerfile.engine
+	@echo dirname $(shell dirname $<)
+	@echo notdir $(notdir $<)
+	@echo suffix $(suffix $<)
+
+# define test
+# $1.debug:
+# 	echo $1make
+# endef
+# $(foreach subcomponent,$(DOCKER_SUB_COMPONENTS),$(eval $(call test,$(subcomponent))))
 
 ################################################################################
 ### Standard rules
