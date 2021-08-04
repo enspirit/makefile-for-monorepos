@@ -1,5 +1,6 @@
 export DOCKER_BUILD="./tests/docker-build.sh"
 export DOCKER_COMPOSE="./tests/docker-compose.sh"
+export DOCKER_SCAN="./tests/docker-scan.sh"
 
 setup() {
   rm -rf .build
@@ -9,6 +10,7 @@ setup() {
 clear_wrapper_logs() {
   clear_build_logs
   clear_compose_logs
+  clear_scan_logs
 }
 
 clear_build_logs() {
@@ -17,6 +19,10 @@ clear_build_logs() {
 
 clear_compose_logs() {
   echo "" > tests/docker-compose.log
+}
+
+clear_scan_logs() {
+  echo "" > tests/docker-scan.log
 }
 
 has_built() {
@@ -33,5 +39,9 @@ has_upped() {
 
 has_downed() {
   grep "command=stop,component=$1" tests/docker-compose.log
+}
+
+has_scanned() {
+  grep "image=$1" tests/docker-scan.log
 }
 

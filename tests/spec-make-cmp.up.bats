@@ -7,7 +7,7 @@ load test_helper
   has_built monorepo/api
 }
 
-@test "'make <comp>.up' deletgates to docker-compose up" {
+@test "'make <comp>.up' delegates to docker-compose up" {
   make api.up
   has_upped api
 }

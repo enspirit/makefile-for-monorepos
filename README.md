@@ -110,6 +110,17 @@ DOCKER_COMPOSE :=
 
 # Docker build extra options for all builds (optional)
 DOCKER_BUILD_ARGS :=
+
+# Which command is used to scan docker images (defaults to 'docker scan')
+DOCKER_SCAN := 
+
+# Docker scan extra options (optional)
+DOCKER_SCAN_ARGS := 
+
+# Should docker scan fail on errors (true/false, defaults to 'true')
+# When running the `make scan` rule with this setting to true
+# the scan will stop at the first image with vulnerabilities
+DOCKER_SCAN_FAIL_ON_ERR := 
 ```
 
 It is important to note that these variables can also be overriden by exporting environment variables, e.g. `DOCKER_TAG=test make images`.
@@ -130,6 +141,7 @@ As soon as you create one of them it will be included automatically. You can see
 * `make clean`: removes the sentinel files (see [Sentinel files](#sentinel-files))
 * `make push-images`: pushes all images to the docker registry (after building them if necessary)
 * `make pull-images`: pulls all images from the docker registry
+* `make scan`: scan all images for vulnerabilities
 
 ### General lifecycle rules
 
@@ -152,6 +164,7 @@ For every docker component in your repo, you can run:
 * `make {component}.clean`: removes the component's sentinel files (see [Sentinel files](#sentinel-files))
 * `make {component}.pull`: pulls the component image from the docker registry
 * `make {component}.push`: pushes the image to the registry, :warning: it also rebuilds the component if any files or dependencies have changed
+* `make {component}.scan`: scans the component image for vulnerabilities
 
 ### Per-component lifecycle rules
 

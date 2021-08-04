@@ -37,12 +37,21 @@ DOCKER_TAG := $(or ${DOCKER_TAG},${DOCKER_TAG},latest)
 # Which command is used to build docker images
 DOCKER_BUILD := $(or ${DOCKER_BUILD},${DOCKER_BUILD},docker build)
 
+# Docker build extra options for all builds (optional)
+DOCKER_BUILD_ARGS :=
+
+# Which command is used to scan docker images
+DOCKER_SCAN := $(or ${DOCKER_SCAN},${DOCKER_SCAN},docker scan)
+
+# Docker scan extra options
+DOCKER_SCAN_ARGS := 
+
+# Docker scan extra options
+DOCKER_SCAN_FAIL_ON_ERR := $(or ${DOCKER_SCAN_FAIL_ON_ERR},${DOCKER_SCAN_FAIL_ON_ERR},true)
+
 # Which command is used for docker-compose (you can switch from 'docker-compose' to 'docker compose')
 # by overriding this in your config.mk
 DOCKER_COMPOSE := $(or ${DOCKER_COMPOSE},${DOCKER_COMPOSE},docker-compose)
-
-# Docker build extra options for all builds (optional)
-DOCKER_BUILD_ARGS :=
 
 ## The list of components being docker based (= component folder includes a Dockerfile)
 DOCKER_COMPONENTS := $(shell find * -name "Dockerfile" -maxdepth 1 -exec dirname {} \;)
@@ -53,7 +62,7 @@ COMPOSE_SERVICES := $(shell $(DOCKER_COMPOSE) config --services)
 ################################################################################
 ### Image rules
 ###
-.PHONY: images clean push-images pull-images
+.PHONY: images clean push-images pull-images scan
 
 images: $(addsuffix .image,$(DOCKER_COMPONENTS))
 clean:: $(addsuffix .clean,$(DOCKER_COMPONENTS))
@@ -68,7 +77,12 @@ push-images: $(addsuffix .push,$(DOCKER_COMPONENTS))
 # An individual .pull task exists on each component as well
 pull-images: $(addsuffix .pull,$(DOCKER_COMPONENTS))
 
-define make-component-rules
+# Scan docker images for vulnerabilities
+#
+# An individual .scan task exists on each component as well
+scan: $(addsuffix .scan,$(DOCKER_COMPONENTS))
+
+define make-image-rules
 
 .PHONY: $1.clean $1.push $1.pull
 
@@ -84,7 +98,7 @@ $1_DOCKER_CONTEXT := $(or ${$1_DOCKER_CONTEXT},${$1_DOCKER_CONTEXT},$1)
 $1.clean::
 	rm -rf .build/$1
 
-# Build the image and touch the corresponding .log and .built files
+# Build the image and touch the corresponding .log and .built sentinel files
 $1.image:: .build/$1/Dockerfile.built
 .build/$1/Dockerfile.built: $1/Dockerfile $(shell git ls-files $1)
 	@mkdir -p .build/$1
@@ -96,6 +110,11 @@ $1.image:: .build/$1/Dockerfile.built
 # where <t> is the name of the component
 .build/$1/Dockerfile.built: $(foreach dep,$($1_DEPS),.build/$(dep)/Dockerfile.built)
 
+# Scans the image for vulnerabilities
+$1.scan:: $1.image
+	@echo -e "--- Scanning $(PROJECT)/$1:${DOCKER_TAG} for vulnerabilities ---"
+	@${DOCKER_SCAN} ${DOCKER_SCAN_ARGS} $(PROJECT)/$1:${DOCKER_TAG} || !${DOCKER_SCAN_FAIL_ON_ERR}
+	
 # Pushes the image to the private repository
 $1.push: .build/$1/Dockerfile.pushed
 .build/$1/Dockerfile.pushed: .build/$1/Dockerfile.built
@@ -115,8 +134,9 @@ $1.pull::
 	@echo -e "--- Pulling $(DOCKER_REGISTRY)/$(PROJECT)/$1:${DOCKER_TAG} as ${PROJECT}/$1:${DOCKER_TAG} ---"
 	@docker pull $(DOCKER_REGISTRY)/$(PROJECT)/$1:${DOCKER_TAG}
 	@docker tag $(DOCKER_REGISTRY)/$(PROJECT)/$1:${DOCKER_TAG} ${PROJECT}/$1:${DOCKER_TAG}
+
 endef
-$(foreach component,$(DOCKER_COMPONENTS),$(eval $(call make-component-rules,$(component))))
+$(foreach component,$(DOCKER_COMPONENTS),$(eval $(call make-image-rules,$(component))))
 
 ################################################################################
 ### Standard rules

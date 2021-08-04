@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 ###
-### This script mocks docker build and is used as DOCKER_BUILD_CMD
+### This script mocks docker build and is used as DOCKER_BUILD
 ### when running the tests
 ###
 

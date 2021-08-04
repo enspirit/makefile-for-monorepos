@@ -5,11 +5,13 @@ load test_helper
 @test "'make images' builds all images" {
   run make images
   [ "$status" -eq 0 ]
-  has_built monorepo/api
   has_built monorepo/base
+  has_built monorepo/api
+  has_built monorepo/frontend
+  has_built monorepo/tests
 }
 
-@test "'make images' does not rebbuild images when unnecessary" {
+@test "'make images' does not rebuild images when unnecessary" {
   run make images
   [ "$status" -eq 0 ]
   has_built monorepo/api

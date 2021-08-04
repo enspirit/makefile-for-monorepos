@@ -1,2 +1,2 @@
-docker-build.log
-docker-compose.log
+docker-*.log
+
