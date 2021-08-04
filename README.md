@@ -3,7 +3,7 @@
 ## What is this?
 
 This project is providing a reusable Makefile for docker projects organised as monorepositories.
-Everything else next to that Makefile is just us showcasing it's usage and capabilities.
+Everything else next to that Makefile is just us showcasing its usage and capabilities.
 
 ## Ok for the what. Now, why?
 
@@ -39,6 +39,40 @@ Option 2, with curl:
 ```bash
 curl https://raw.githubusercontent.com/enspirit/monorepo-example/master/Makefile -o Makefile
 ```
+
+## Configure it
+
+The first time you run one of the Makefile's rules, it will create a config.mk where you can configure the name of your project (it defaults to your project's folder name). That name will be used as a prefix for all the images built.
+
+Let's take this repository as an example. [We've used "monorepo" as a project name](config.mk#1) and we have 4 components: api, base, frontend & tests. The images built will be tagged monorepo/api:latest, monorepo/base:latest, etc...
+
+## Override things
+
+You can override many things in your `config.mk` if our defaults are not for your taste, it's as simple as adding a line in it specifying which variable you want to override and its new value.
+
+For instance to use your own private docker registry:
+```
+PROJECT := monorepo
+DOCKER_REGISTRY := my.private.registry
+```
+
+Here is the list of variables you can override:
+
+```
+# Specify which docker tag is built (defaults to latest)
+DOCKER_TAG :=
+
+# Which command is used to build docker images (defaults to docker build)
+DOCKER_BUILD :=
+
+# Which command is used for docker-compose (default to docker-compose)
+DOCKER_COMPOSE :=
+
+# Docker build extra options for all builds (optional)
+DOCKER_BUILD_ARGS :=
+```
+
+It is important to note that these variables can also be overriden by exporting environment variables, e.g. `DOCKER_TAG=test make images`.
 
 ## Usage:
 
