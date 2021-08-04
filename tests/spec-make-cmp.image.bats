@@ -50,3 +50,13 @@ load test_helper
   make api.image
   has_built monorepo/api
 }
+
+@test "'make <comp>.image' builds the latest tag by default" {
+  make api.image
+  has_built monorepo/api:latest
+}
+
+@test "'make <comp>.image' builds the appropriate tag when DOCKER_TAG is overriden" {
+  DOCKER_TAG=test make api.image
+  has_built monorepo/api:test
+}
