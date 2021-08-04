@@ -154,17 +154,6 @@ $(foreach component,$(DOCKER_COMPONENTS),$(eval $(call make-image-rules,$(compon
 $(foreach subcmp,$(DOCKER_SUB_COMPONENTS),\
 	$(eval $(call make-image-rules,$(shell dirname $(subcmp)),$(notdir $(subcmp)),$(shell dirname $(subcmp)),$(suffix $(subcmp)))))
 
-debug: multiple/Dockerfile.engine
-	@echo dirname $(shell dirname $<)
-	@echo notdir $(notdir $<)
-	@echo suffix $(suffix $<)
-
-# define test
-# $1.debug:
-# 	echo $1make
-# endef
-# $(foreach subcomponent,$(DOCKER_SUB_COMPONENTS),$(eval $(call test,$(subcomponent))))
-
 ################################################################################
 ### Standard rules
 ###
