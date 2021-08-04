@@ -2,3 +2,6 @@ services:
 
   api:
     image: monorepo/api
+
+  frontend:
+    image: monorepo/frontend

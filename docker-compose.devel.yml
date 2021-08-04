@@ -2,3 +2,7 @@ services:
 
   api:
     env_file: ./api/env/devel.env
+
+  frontend:
+    ports:
+      - 80:80
