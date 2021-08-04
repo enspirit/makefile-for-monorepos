@@ -1,34 +1,45 @@
-# Makefile for monorepos
+# `make up` and go
 
 ## What is this?
 
-This project is providing a reusable Makefile for docker projects organised as monorepositories.
-Everything else next to that Makefile is just us showcasing its usage and capabilities.
+This project provides a reusable Makefile for software architectures based on micro services that use docker extensively and are organised as monorepositories.
+Everything else apart from the Makefile is just us showcasing its usage and capabilities.
 
-## Ok for the what. Now, why?
+## Why?
 
-At Enspirit we embraced docker, docker-compose and monorepositories a while ago and our team is usually rotating on 4 to 5 projects at a time.
+At Enspirit for some time we have embraced *docker*, *docker-compose* and monorepositories and our team is usually rotating between 4 to 5 projects at a time.
 
-We wanted a way to have reproducible builds but also a tooling allowing us to work the same way on all these different projects.
+We wanted a way to have reproducible builds, but also tooling allowing us to work the same way on all these different projects.
 
-This Makefile allows us also to have a single verbiage and we don't have to remember the specific commands of `docker` or `docker-compose`, but also the several tests framework (`mocha`, `rspec`, ...) used or the package managers (`npm`, `gem`, ...).
+We try to apply the agile rule saying that only one command is needed to start a project from a fresh clone.
 
-This Makefile also provides us with an easy way of expressing dependencies between components.
+This Makefile is our way of achieving that goal. Why don't you see for yourself:
 
-## How?
+```
+git clone git@github.com:enspirit/monorepo-example.git
+cd monorepo-example
+make up
+```
 
-By following some conventions, the makefile gives us some magic:
+_n.b. You need *docker*, *docker-compose* and *make* installed locally._
 
-If a folder at the top level of the repository directly contains a Dockerfile, Makefile assumes that it is a component of the project & you magically get all the [image rules](#per-component-image-rules) for it.
+## Features
 
-You use docker-compose? Well, for every single service listed in there you will get all the [lifecycle rules](#per-component-lifecycle-rules) for it.
+* it manages builds of all components' docker images
+* it allows managing inter-component dependencies
+* it only rebuilds images whose source code or dependencies have changed
+* it manages lifecycles of the various components (start, stop, restart, ...)
+* it pushes and pulls images from repositories
+* it provides extension points for standard rules (e.g. unit testing, cleaning, ...)
+* it also allows the extension of the makefile with ad-hoc rules for specific components
 
-It provides 'magic' but it is still make so you can [configure](#configure-it) things, [override](#overrides-things) them and even [extend](#extend-it) it.
+## How do I install this on my own project?
 
-## How do I try this?
+The only thing you need to get started is to copy our Makefile from this repo and place it in your own monorepository project and follow the [conventions below](#conventions).
 
-The only thing you need to get started is the Makefile from this repo, nothing else.
-We all love those one-liner installation methods, so here you go: make sure you are inside the folder of your monorepo project and run:
+We all love those one-liner installation methods, so here you go:
+
+_n.b. make sure you are inside the folder of your monorepo project._
 
 Option 1, with wget:
 ```bash
@@ -40,15 +51,44 @@ Option 2, with curl:
 curl https://raw.githubusercontent.com/enspirit/monorepo-example/master/Makefile -o Makefile
 ```
 
-## Configure it
+## Conventions
 
-The first time you run one of the Makefile's rules, it will create a config.mk where you can configure the name of your project (it defaults to your project's folder name). That name will be used as a prefix for all the images built.
+By following some conventions our makefile adds some magic. Let's consider the file
+structure of this very repository:
 
-Let's take this repository as an example. [We've used "monorepo" as a project name](config.mk#1) and we have 4 components: api, base, frontend & tests. The images built will be tagged monorepo/api:latest, monorepo/base:latest, etc...
+```
+monorepo-example
+├── base                       # A component used as a base for others (dependency)
+│   └── Dockerfile             # ... with its Dockerfile
+├── api                        # An api component
+│   ├── Dockerfile             # ... with its Dockerfile extending the base image
+│   ├── env                    #
+│   │   └── devel.env          # Default env vars for the devel environment
+│   ├── makefile.mk            # Extensions and ad-hoc rules for the component
+│   └── ...                    #
+├── frontend                   # Another component
+|   └── Dockerfile             #
+├── .env                       # Main environment variables including COMPOSE_FILE
+├── docker-compose.base.yml    #
+├── docker-compose.devel.yml   # Orchestration with docker-compose files
+├── docker-compose.testing.yml #
+├── Makefile                   # Our reusable makefile
+└── config.mk                  # Specific configuration and global ad-hoc rules
+```
 
-## Override things
+1. All folders at level one will be considered *components* of the architecture as soon as they include a Dockerfile. It is the case in this example for *base*, *api* and *frontend*. For all of them you magically get all the [image rules](#per-component-image-rules).
 
-You can override many things in your `config.mk` if our defaults are not for your taste, it's as simple as adding a line in it specifying which variable you want to override and its new value.
+2. All services defined in the docker-compose [currently enabled by the COMPOSE_FILE variable](https://docs.docker.com/compose/reference/envvars/#compose_file) automatically get the [lifecycle rules](#per-component-lifecycle-rules).
+
+3. It provides 'magic' but it is still based on *make* so you can [configure or override](#configure-it) things and even [extend](#extend-it) them globally or on a component basis using `config.mk` and `makefile.mk` files. This allows you to extend rules without changing the original makefile so that you can get [bugfixes and improvements](#how-to-update)
+
+## Configure it (optional)
+
+The first time you run one of the Makefile's rules, it will create a config.mk where you can configure the name of your project (it defaults to your project's folder name). That name will be used as a prefix for all the subsequent images built.
+
+Let's take this repository as an example. [We've used "monorepo" as a project name](config.mk#1) and we have 4 components: *api*, *base*, *frontend* and *tests*. The images built will be tagged monorepo/api:latest, monorepo/base:latest, etc...
+
+You can override other things in your `config.mk` if our defaults are not to your taste. It's as simple as adding a line specifying which variable you want to override and providing its new value.
 
 For instance to use your own private docker registry:
 ```
@@ -59,13 +99,13 @@ DOCKER_REGISTRY := my.private.registry
 Here is the list of variables you can override:
 
 ```
-# Specify which docker tag is built (defaults to latest)
+# Specify which docker tag is built (defaults to 'latest')
 DOCKER_TAG :=
 
-# Which command is used to build docker images (defaults to docker build)
+# Which command is used to build docker images (defaults to 'docker build')
 DOCKER_BUILD :=
 
-# Which command is used for docker-compose (default to docker-compose)
+# Which command is used for docker-compose (defaults to 'docker-compose')
 DOCKER_COMPOSE :=
 
 # Docker build extra options for all builds (optional)
@@ -74,7 +114,15 @@ DOCKER_BUILD_ARGS :=
 
 It is important to note that these variables can also be overriden by exporting environment variables, e.g. `DOCKER_TAG=test make images`.
 
-## Usage:
+## Extend it
+
+You can add global rules in your `config.mk` and ad-hoc component rules in `makefile.mk` files.
+
+As soon as you create one of them it will be included automatically. You can see an example of that in [tests/makefile.mk](tests/makefile.mk) where we created a `tests.run` rule that runs the unit tests for this project.
+
+*N.B. We recommend keeping all custom rules prefixed with the name of the component.*
+
+## Reference of available make rules
 
 ### General image rules
 
@@ -105,7 +153,7 @@ For every docker component in your repo, you can run:
 * `make {component}.off`: stops the component
 * `make {component}.up`: forces the recreation of the container, :warning: it also rebuilds the component's image if any files or dependencies have changed
 * `make {component}.down`: stops the component
-* `make {component}.restart`: restarts the component
+* `make {component}.restart`: restarts the component (equivalent of `off` then `on`)
 * `make {component}.logs`: tails the logs of the component
 * `make {component}.bash`: gets a bash on the component
 
@@ -115,7 +163,19 @@ You might wonder why we have both `make {component}.up` and `make {component}.on
 
 They behave exactly the same way and alias `docker-compose stop component`. It is just for  consistency: if we can start things with both `up` and `on` one would expect to have both `down` and `off`.
 
-## Sentinel files
+## Advanced use cases
+
+### Inter-component dependencies
+
+Sometimes components depend on each other. There is an example of this in this repository: the *api* component depends on the *base* component [since its Dockerfile uses the base component as a base image](api/Dockerfile).
+
+This can be expressed in the component's `makefile.mk` like we do in [api/makefile.mk](api/makefile.mk) by defining a variable `{component}_DEPS` that lists such dependencies.
+
+In our example it means that *make* will know that the *base* component has to be built __before__ *api*. Not only that, but also any rebuild of *base* should retrigger a build of *api*.
+
+## Under the hood
+
+### Sentinel files
 
 First a little quote from [make's user manual](https://www.gnu.org/software/make/manual/html_node/Rules.html):
 
@@ -138,11 +198,11 @@ And the 'problem' with a phony target is that its recipe will be executed every 
 
 Yes and with [buildkit](https://docs.docker.com/develop/develop-images/build_enhancements/) it's getting even better.
 
-But on monorepo with a lot of components we can save precious seconds by not re-running 'docker build' for components that haven't changed. That also allows us to rely on `make up` to decide which components need to rebuild before starting the docker-compose project.
+But on monorepos with a lot of components we can save precious seconds by not re-running 'docker build' for components that haven't changed. That also allows us to rely on `make up` to decide which components need rebuildind before starting the docker-compose project.
 
 > Ok, now what about those sentinels?
 
-Sentinels are files that we can use to tell makefile when a rebuild is needed.
+Sentinels are files that we can use to tell make when a rebuild is needed.
 Let's look at an example:
 
 ```make
@@ -158,7 +218,7 @@ Here as you can see we have now two rules: `component.image` and `component/.bui
 `component.image` has one prerequisite: `component/.built`.
 `component/.built` also has one prerequisite: `component/Dockerfile`.
 
-You can also see that the first rule does not have a recipe and that our second rules ["touches"](https://man7.org/linux/man-pages/man1/touch.1.html) the `component/.built` after building the docker image.
+You can also see that the first rule does not have a recipe and that our second rule ['touches'](https://man7.org/linux/man-pages/man1/touch.1.html) the `component/.built` after building the docker image.
 
 > Now what does this do?
 
@@ -167,5 +227,6 @@ Well let's look again at some of make's user manual:
 > A normal prerequisite makes two statements: first, it imposes an order in which recipes will be invoked: the recipes for all prerequisites of a target will be completed before the recipe for the target is run. Second, it imposes a dependency relationship: if any prerequisite is newer than the target, then the target is considered out-of-date and must be rebuilt.
 
 In other terms this means that since the recipe that builds our docker image finishes by touching the sentinel file, make will know:
-* that if the file is there, it doesn't have to build the image again
-* that if our sentinel file is older than our Dockerfile (the prerequisite for our sentinel), then we do need a rebuild.
+* if the file is there, it doesn't have to build the image again
+* if our sentinel file is older than our Dockerfile (the prerequisite for our sentinel), then we do need a rebuild.
+

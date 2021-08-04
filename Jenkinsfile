@@ -8,18 +8,7 @@ pipeline {
     issueCommentTrigger('.*build this please.*')
   }
 
-  environment {
-    SLACK_CHANNEL = '#opensource-cicd'
-  }
-
   stages {
-
-    stage ('Start') {
-      steps {
-        cancelPreviousBuilds()
-        sendNotifications('STARTED', SLACK_CHANNEL)
-      }
-    }
 
     stage ('Building Docker Images') {
       steps {
@@ -57,12 +46,6 @@ pipeline {
       container('builder') {
         sh 'make down'
       }
-    }
-    success {
-      sendNotifications('SUCCESS', SLACK_CHANNEL)
-    }
-    failure {
-      sendNotifications('FAILED', SLACK_CHANNEL)
     }
   }
 }

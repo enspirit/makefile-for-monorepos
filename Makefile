@@ -56,7 +56,7 @@ COMPOSE_SERVICES := $(shell $(DOCKER_COMPOSE) config --services)
 .PHONY: images clean push-images pull-images
 
 images: $(addsuffix .image,$(DOCKER_COMPONENTS))
-clean: $(addsuffix .clean,$(DOCKER_COMPONENTS))
+clean:: $(addsuffix .clean,$(DOCKER_COMPONENTS))
 
 # Pushes all docker images of all components to the private registry
 #
@@ -81,7 +81,7 @@ define make-component-rules
 $1_DOCKER_CONTEXT := $(or ${$1_DOCKER_CONTEXT},${$1_DOCKER_CONTEXT},$1)
 
 # Remove docker build assets
-$1.clean:
+$1.clean::
 	rm -rf .build/$1
 
 # Build the image and touch the corresponding .log and .built files

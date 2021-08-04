@@ -1,4 +1,4 @@
 api_DEPS := base
 
-api.test:
+api.test::
 	docker run monorepo/api npm run test
