@@ -76,9 +76,9 @@ monorepo-example
 └── config.mk                  # Specific configuration and global ad-hoc rules
 ```
 
-1. All folders at level one will be considered *components* of the architecture as soon as they include a Dockerfile. It is the case in this example for *base*, *api* and *frontend*. For all of them you magically get all the [image rules](#per-component-image-rules).
+1. All folders at level one will be considered *components* of the architecture as soon as they include a Dockerfile. It is the case in this example for *base*, *api* and *frontend*. For all of them you magically get all the [component image rules](#per-component-image-rules) and [component standard rules](#per-component-standard-rules).
 
-2. All services defined in the docker-compose [currently enabled by the COMPOSE_FILE variable](https://docs.docker.com/compose/reference/envvars/#compose_file) automatically get the [lifecycle rules](#per-component-lifecycle-rules).
+2. All services defined in the docker-compose [currently enabled by the COMPOSE_FILE variable](https://docs.docker.com/compose/reference/envvars/#compose_file) automatically get the [component lifecycle rules](#per-component-lifecycle-rules).
 
 3. It provides 'magic' but it is still based on *make* so you can [configure or override](#configure-it) things and even [extend](#extend-it) them globally or on a component basis using `config.mk` and `makefile.mk` files. This allows you to extend rules without changing the original makefile so that you can get [bugfixes and improvements](#how-to-update)
 
