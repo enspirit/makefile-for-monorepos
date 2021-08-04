@@ -7,7 +7,7 @@ Everything else apart from the Makefile is just us showcasing its usage and capa
 
 ## Why?
 
-At Enspirit for some time we have embraced *docker*, *docker-compose* and monorepositories and our team is usually rotating between 4 to 5 projects at a time.
+At Enspirit for some time we have embraced [docker](https://www.docker.com/), [docker-compose](https://docs.docker.com/compose/) and [monorepositories](https://en.wikipedia.org/wiki/Monorepo) and our team is usually rotating between 4 to 5 projects at a time.
 
 We wanted a way to have reproducible builds, but also tooling allowing us to work the same way on all these different projects.
 
@@ -21,7 +21,7 @@ cd monorepo-example
 make up
 ```
 
-_n.b. You need *docker*, *docker-compose* and *make* installed locally._
+_n.b. You need *docker*, *docker-compose* and *make* (~> 3.81) installed locally._
 
 ## Features
 
@@ -67,7 +67,7 @@ monorepo-example
 │   ├── makefile.mk            # Extensions and ad-hoc rules for the component
 │   └── ...                    #
 ├── frontend                   # Another component
-|   └── Dockerfile             #
+│   └── Dockerfile             #
 ├── .env                       # Main environment variables including COMPOSE_FILE
 ├── docker-compose.base.yml    #
 ├── docker-compose.devel.yml   # Orchestration with docker-compose files
@@ -78,15 +78,15 @@ monorepo-example
 
 1. All folders at level one will be considered *components* of the architecture as soon as they include a Dockerfile. It is the case in this example for *base*, *api* and *frontend*. For all of them you magically get all the [component image rules](#per-component-image-rules) and [component standard rules](#per-component-standard-rules).
 
-2. All services defined in the docker-compose [currently enabled by the COMPOSE_FILE variable](https://docs.docker.com/compose/reference/envvars/#compose_file) automatically get the [component lifecycle rules](#per-component-lifecycle-rules).
+2. All services defined in the docker-compose files [currently enabled by the COMPOSE_FILE variable](https://docs.docker.com/compose/reference/envvars/#compose_file) automatically get the [component lifecycle rules](#per-component-lifecycle-rules).
 
-3. It provides 'magic' but it is still based on *make* so you can [configure or override](#configure-it) things and even [extend](#extend-it) them globally or on a component basis using `config.mk` and `makefile.mk` files. This allows you to extend rules without changing the original makefile so that you can get [bugfixes and improvements](#how-to-update)
+3. It provides 'magic' but it is still based on *make* so you can [configure or override](#configure-it-optional) things and even [extend](#extend-it) them globally or on a component basis using `config.mk` and `makefile.mk` files. This allows you to extend rules without changing the original makefile so that you can get [bugfixes and improvements](#how-to-update)
 
 ## Configure it (optional)
 
 The first time you run one of the Makefile's rules, it will create a config.mk where you can configure the name of your project (it defaults to your project's folder name). That name will be used as a prefix for all the subsequent images built.
 
-Let's take this repository as an example. [We've used "monorepo" as a project name](config.mk#1) and we have 4 components: *api*, *base*, *frontend* and *tests*. The images built will be tagged monorepo/api:latest, monorepo/base:latest, etc...
+Let's take this repository as an example. [We've used "monorepo" as a project name](config.mk#L1) and we have 4 components: *api*, *base*, *frontend* and *tests*. The images built will be tagged monorepo/api:latest, monorepo/base:latest, etc...
 
 You can override other things in your `config.mk` if our defaults are not to your taste. It's as simple as adding a line specifying which variable you want to override and providing its new value.
 
@@ -184,13 +184,13 @@ They behave exactly the same way and alias `docker-compose stop component`. It i
 
 ### Per-component standard rules
 
-* `make {component}.tests`: Runs all tests for the component (equivalent to `{component}.tests.unit` then `tests.integration`)
+* `make {component}.tests`: Runs all tests for the component (equivalent to `{component}.tests.unit` then `{component}.tests.integration`)
 * `make {component}.tests.unit`: Runs all the component's unit tests
 * `make {component}.tests.integration`: Runs all the component's integration tests
 
-These three rules are placeholder. Their recipe must be implemented in the components' `makefile.mk`.
+These three rules are placeholders. Their recipes must be implemented in the components' `makefile.mk`.
 
-For example consider the file [api/makefile.mk]:
+For example consider the [api/makefile.mk](api/makefile.mk#L4) file from this repository:
 ```make
 api.tests.unit::
 	@docker run monorepo/api npm run test:unit
@@ -211,9 +211,9 @@ In our example it means that *make* will know that the *base* component has to b
 
 ## FAQ
 
-**Question:** I'd love to use `make {component}.bash` but my image does not include bash (for instance: alpine-based)
+**Question:** I'd love to use `make {component}.bash` but my image does not include bash (e.g: [alpine](https://hub.docker.com/_/alpine) based images)
 
-**Answer** You can override the shell that is run by creating a `{component}_SHELL` override. [See our example](api/makefile.mk#2).
+**Answer:** You can override the shell that is run by creating a `{component}_SHELL` override. [See our example](api/makefile.mk#L2).
 
 ## Under the hood
 
