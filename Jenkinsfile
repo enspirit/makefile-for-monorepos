@@ -31,6 +31,16 @@ pipeline {
       }
     }
 
+    stage ('Make up') {
+      steps {
+        container('builder') {
+          script {
+            sh 'make up'
+          }
+        }
+      }
+    }
+
     stage ('Run tests') {
       steps {
         container('builder') {
@@ -43,6 +53,11 @@ pipeline {
   }
 
   post {
+    always {
+      container('builder') {
+        sh 'make down'
+      }
+    }
     success {
       sendNotifications('SUCCESS', SLACK_CHANNEL)
     }

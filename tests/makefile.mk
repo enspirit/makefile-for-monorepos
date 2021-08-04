@@ -1,2 +1,2 @@
 tests.run:
-	docker-compose run tests tests
+	docker-compose exec tests bats tests
