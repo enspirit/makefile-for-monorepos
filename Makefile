@@ -35,7 +35,7 @@ DOCKER_REGISTRY := $(or ${DOCKER_REGISTRY},${DOCKER_REGISTRY},docker.io)
 DOCKER_TAG := $(or ${DOCKER_TAG},${DOCKER_TAG},latest)
 
 # Which command is used to build docker images
-DOCKER_BUILD := $(or ${DOCKER_BUILD},${DOCKER_BUILD},docker buildx build)
+DOCKER_BUILD := $(or ${DOCKER_BUILD},${DOCKER_BUILD},docker build)
 
 # Which command is used for docker-compose (you can switch from 'docker-compose' to 'docker compose')
 # by overriding this in your config.mk
