@@ -209,6 +209,12 @@ This can be expressed in the component's `makefile.mk` like we do in [api/makefi
 
 In our example it means that *make* will know that the *base* component has to be built __before__ *api*. Not only that, but also any rebuild of *base* should retrigger a build of *api*.
 
+## FAQ
+
+**Question:** I'd love to use `make {component}.bash` but my image does not include bash (for instance: alpine-based)
+
+**Answer** You can override the shell that is run by creating a `{component}_SHELL` override. [See our example](api/makefile.mk#2).
+
 ## Under the hood
 
 ### Sentinel files
