@@ -89,8 +89,8 @@ $1.image:: .build/$1/Dockerfile.built
 .build/$1/Dockerfile.built: $1/Dockerfile $(shell git ls-files $1)
 	@mkdir -p .build/$1
 	@echo -e "--- Building $(PROJECT)/$1:${DOCKER_TAG} ---"
-	${DOCKER_BUILD} ${DOCKER_BUILD_ARGS} -f $1/Dockerfile -t $(PROJECT)/$1:${DOCKER_TAG} $${$1_DOCKER_CONTEXT} | tee .build/$1/Dockerfile.log
-	touch .build/$1/Dockerfile.built
+	@${DOCKER_BUILD} ${DOCKER_BUILD_ARGS} -f $1/Dockerfile -t $(PROJECT)/$1:${DOCKER_TAG} $${$1_DOCKER_CONTEXT} | tee .build/$1/Dockerfile.log
+	@touch .build/$1/Dockerfile.built
 
 # Components can have dependencies on others thanks to the <t>_DEPS variables
 # where <t> is the name of the component
@@ -105,14 +105,16 @@ $1.push: .build/$1/Dockerfile.pushed
 	fi
 	@echo
 	@echo -e "--- Pushing $(DOCKER_REGISTRY)/$(PROJECT)/$1:${DOCKER_TAG} ---"
-	docker tag $(PROJECT)/$1:${DOCKER_TAG} $(DOCKER_REGISTRY)/$(PROJECT)/$1:${DOCKER_TAG}
-	docker push $(DOCKER_REGISTRY)/$(PROJECT)/$1:${DOCKER_TAG} | tee -a .build/$1/Dockerfile.push.log
-	touch .build/$1/Dockerfile.pushed
+	@docker tag $(PROJECT)/$1:${DOCKER_TAG} $(DOCKER_REGISTRY)/$(PROJECT)/$1:${DOCKER_TAG}
+	@docker push $(DOCKER_REGISTRY)/$(PROJECT)/$1:${DOCKER_TAG} | tee -a .build/$1/Dockerfile.push.log
+	@touch .build/$1/Dockerfile.pushed
 
 # Pull the latest image version from the private repository
 $1.pull::
-	docker pull $(DOCKER_REGISTRY)/$(PROJECT)/$1:${DOCKER_TAG}
-	docker tag $(DOCKER_REGISTRY)/$(PROJECT)/$1:${DOCKER_TAG} ${PROJECT}/$1:${DOCKER_TAG}
+	@echo
+	@echo -e "--- Pulling $(DOCKER_REGISTRY)/$(PROJECT)/$1:${DOCKER_TAG} as ${PROJECT}/$1:${DOCKER_TAG} ---"
+	@docker pull $(DOCKER_REGISTRY)/$(PROJECT)/$1:${DOCKER_TAG}
+	@docker tag $(DOCKER_REGISTRY)/$(PROJECT)/$1:${DOCKER_TAG} ${PROJECT}/$1:${DOCKER_TAG}
 endef
 $(foreach component,$(DOCKER_COMPONENTS),$(eval $(call make-component-rules,$(component))))
 
@@ -159,27 +161,27 @@ $1.image::
 
 # Wakes the component up
 $1.up: $1.image
-	$(DOCKER_COMPOSE) up -d --force-recreate $1
+	@$(DOCKER_COMPOSE) up -d --force-recreate $1
 
 # Wakes the component up using the last known image
 $1.on:
-	$(DOCKER_COMPOSE) up -d $1
+	@$(DOCKER_COMPOSE) up -d $1
 
 # Alias for down
 $1.off:
-	$(DOCKER_COMPOSE) stop $1
+	@$(DOCKER_COMPOSE) stop $1
 
 # Restart the component the light way, i.e. without rebuilding the image
 $1.restart:
-	$(DOCKER_COMPOSE) stop $1
-	$(DOCKER_COMPOSE) up -d $1
+	@$(DOCKER_COMPOSE) stop $1
+	@$(DOCKER_COMPOSE) up -d $1
 
 # SHow the logs in --follow mode
 $1.logs:
-	$(DOCKER_COMPOSE) logs -f $1
+	@$(DOCKER_COMPOSE) logs -f $1
 
 # Opens a bash on the component
 $1.bash:
-	$(DOCKER_COMPOSE) exec $1 bash
+	@$(DOCKER_COMPOSE) exec $1 bash
 endef
 $(foreach component,$(COMPOSE_SERVICES),$(eval $(call make-lifecycle-rules,$(component))))
