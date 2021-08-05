@@ -120,7 +120,7 @@ DOCKER_SCAN :=
 DOCKER_SCAN_ARGS :=
 
 # Should docker scan fail on errors (true/false, defaults to 'true')
-# When running the `make scan` rule with this setting to true
+# When running the `make images.scan` rule with this setting to true
 # the scan will stop at the first image with vulnerabilities
 DOCKER_SCAN_FAIL_ON_ERR :=
 ```
@@ -139,11 +139,11 @@ As soon as you create one of them it will be included automatically. You can see
 
 ### General image rules
 
-* `make images`: builds all the docker images for the repo's components
 * `make clean`: removes the sentinel files (see [Sentinel files](#sentinel-files))
-* `make push-images`: pushes all images to the docker registry (after building them if necessary)
-* `make pull-images`: pulls all images from the docker registry
-* `make scan`: scan all images for vulnerabilities
+* `make images`: builds all the docker images for the repo's components
+* `make images.push`: pushes all images to the docker registry (after building them if necessary)
+* `make images.pull`: pulls all images from the docker registry
+* `make images.scan`: scan all images for vulnerabilities
 
 ### General lifecycle rules
 
@@ -162,11 +162,11 @@ As soon as you create one of them it will be included automatically. You can see
 
 For every docker component in your repo, you can run:
 
-* `make {component}.image`: builds the component's docker image
 * `make {component}.clean`: removes the component's sentinel files (see [Sentinel files](#sentinel-files))
-* `make {component}.pull`: pulls the component image from the docker registry
-* `make {component}.push`: pushes the image to the registry, :warning: it also rebuilds the component if any files or dependencies have changed
-* `make {component}.scan`: scans the component image for vulnerabilities
+* `make {component}.image`: builds the component's docker image
+* `make {component}.image.pull`: pulls the component image from the docker registry
+* `make {component}.image.push`: pushes the image to the registry, :warning: it also rebuilds the component if any files or dependencies have changed
+* `make {component}.image.scan`: scans the component image for vulnerabilities
 
 ### Per-component lifecycle rules
 
