@@ -53,7 +53,7 @@ DOCKER_COMPOSE := $(or ${DOCKER_COMPOSE},${DOCKER_COMPOSE},docker-compose)
 DOCKER_COMPONENTS := $(DOCKER_COMPONENTS) $(shell find * -name "Dockerfile" -maxdepth 1 -exec dirname {} \;)
 
 ## The list of services defined in the (enabled) docker-compose files
-COMPOSE_SERVICES := $(shell $(DOCKER_COMPOSE) config --services)
+COMPOSE_SERVICES := $(shell command -v $(DOCKER_COMPOSE) && $(DOCKER_COMPOSE) config --services 2>/dev/null || true)
 
 ################################################################################
 ### Automatically include plugins when present
