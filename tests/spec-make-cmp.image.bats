@@ -51,6 +51,17 @@ load test_helper
   has_built monorepo/api
 }
 
+@test "'make <comp>.image' does not rebuild if its makefile.mk changes" {
+  make api.image
+  has_built monorepo/api
+
+  clear_build_logs
+  touch api/makefile.mk
+
+  make api.image
+  has_not_built monorepo/api
+}
+
 @test "'make <comp>.image' builds the latest tag by default" {
   make api.image
   has_built monorepo/api:latest
