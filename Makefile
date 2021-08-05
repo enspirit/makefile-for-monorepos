@@ -85,28 +85,29 @@ images.pull: $(addsuffix .image.pull,$(DOCKER_COMPONENTS))
 # An individual .image.scan task exists on each component as well
 images.scan: $(addsuffix .image.scan,$(DOCKER_COMPONENTS))
 
+###
+### Arguments:
+### $1: component name
+### $2: Dockerfile
+### $3: docker build context
+###
 define make-image-rules
 
 .PHONY: $1.clean $1.image $.image.push $1.image.pull $1.image.scan
 
-## docker build context is overridable but defaults to the component folder
-## Example of override:
-##
-## tests/makefile.mk:
-##
-## tests_DOCKER_CONTEXT = ./
-$1_DOCKER_CONTEXT := $(or ${$1_DOCKER_CONTEXT},${$1_DOCKER_CONTEXT},$1)
+$1_DOCKER_FILE := $(or ${$1_DOCKER_FILE},${$1_DOCKER_FILE},$2)
+$1_DOCKER_CONTEXT := $(or ${$1_DOCKER_CONTEXT},${$1_DOCKER_CONTEXT},$3)
 
 # Remove docker build assets
 $1.clean::
-	rm -rf .build/$1
+	@rm -rf .build/$1
 
 # Build the image and touch the corresponding .log and .built sentinel files
 $1.image:: .build/$1/Dockerfile.built
-.build/$1/Dockerfile.built: $1/Dockerfile $(shell git ls-files $1)
+.build/$1/Dockerfile.built: $($1_DOCKER_CONTEXT) $(shell git ls-files $1)
 	@mkdir -p .build/$1
 	@echo -e "--- Building $(PROJECT)/$1:${DOCKER_TAG} ---"
-	@${DOCKER_BUILD} ${DOCKER_BUILD_ARGS} -f $1/Dockerfile -t $(PROJECT)/$1:${DOCKER_TAG} $${$1_DOCKER_CONTEXT} | tee .build/$1/Dockerfile.log
+	@${DOCKER_BUILD} ${DOCKER_BUILD_ARGS} -f $${$1_DOCKER_FILE} -t $(PROJECT)/$1:${DOCKER_TAG} $${$1_DOCKER_CONTEXT} | tee .build/$1/Dockerfile.log
 	@touch .build/$1/Dockerfile.built
 
 # Components can have dependencies on others thanks to the <t>_DEPS variables
@@ -139,7 +140,7 @@ $1.image.pull::
 	@docker tag $(DOCKER_REGISTRY)/$(PROJECT)/$1:${DOCKER_TAG} ${PROJECT}/$1:${DOCKER_TAG}
 
 endef
-$(foreach component,$(DOCKER_COMPONENTS),$(eval $(call make-image-rules,$(component))))
+$(foreach component,$(DOCKER_COMPONENTS),$(eval $(call make-image-rules,$(component),$(component)/Dockerfile,$(component))))
 
 ################################################################################
 ### Standard rules
