@@ -1,23 +1,21 @@
 # `make up` and go
 
-## What is this?
+This project provides a reusable Makefile for architectures with multiple software components that use docker extensively and are organized as monorepositories.
 
-This project provides a reusable Makefile for software architectures based on micro services that use docker extensively and are organised as monorepositories.
 Everything else apart from the Makefile is just us showcasing its usage and capabilities.
 
 ## Why?
 
-At Enspirit for some time we have embraced [docker](https://www.docker.com/), [docker-compose](https://docs.docker.com/compose/) and [monorepositories](https://en.wikipedia.org/wiki/Monorepo) and our team is usually rotating between 4 to 5 projects at a time.
+At Enspirit we have embraced [docker](https://www.docker.com/), [docker-compose](https://docs.docker.com/compose/) and [monorepositories](https://en.wikipedia.org/wiki/Monorepo). Our team is usually rotating among multiple software projects.
 
-We wanted a way to have reproducible builds, but also tooling allowing us to work the same way on all these different projects.
+We want to have reproducible builds and tooling allowing us to work the same way on all these different projects. We also want only one command to be needed for building then starting a software after a fresh git clone, even for newcomers.
 
-We try to apply the agile rule saying that only one command is needed to start a project from a fresh clone.
-
-This Makefile is our way of achieving that goal. Why don't you see for yourself:
+This Makefile is an open-source consolidation of years of work to achieve that goal. Why don't you see for yourself:
 
 ```bash
 git clone git@github.com:enspirit/monorepo-example.git
 cd monorepo-example
+
 make up
 ```
 
@@ -31,11 +29,11 @@ _n.b. You need *docker*, *docker-compose* and *make* (~> 3.81) installed locally
 * it manages lifecycles of the various components (start, stop, restart, ...)
 * it pushes and pulls images from repositories
 * it provides extension points for standard rules (e.g. unit testing, cleaning, ...)
-* it also allows the extension of the makefile with ad-hoc rules for specific components
+* it also allows the extension of the Makefile with ad-hoc rules per component
 
-## How do I install this on my own project?
+## Installation
 
-The only thing you need to get started is to copy our Makefile from this repo and place it in your own monorepository project and follow the [conventions below](#conventions).
+Copy our Makefile from this repo and place it in your own monorepository project. Your source code organization needs to follow the [conventions below](#conventions).
 
 We all love those one-liner installation methods, so here you go:
 
@@ -53,7 +51,7 @@ curl https://raw.githubusercontent.com/enspirit/monorepo-example/master/Makefile
 
 ## Conventions
 
-By following some conventions our makefile adds some magic. Let's consider the file
+By following some conventions our Makefile adds some magic. Let's consider the file
 structure of this very repository:
 
 ```
@@ -68,21 +66,25 @@ monorepo-example
 │   └── ...                    #
 ├── frontend                   # Another component
 │   └── Dockerfile             #
-├── .env                       # Main environment variables including COMPOSE_FILE
+├── .env                       # Main environment variables (e.g. COMPOSE_FILE)
 ├── docker-compose.base.yml    #
 ├── docker-compose.devel.yml   # Orchestration with docker-compose files
 ├── docker-compose.testing.yml #
-├── Makefile                   # Our reusable makefile
+├── Makefile                   # Our reusable Makefile
 └── config.mk                  # Specific configuration and global ad-hoc rules
 ```
 
-1. All folders at level one will be considered *components* of the architecture as soon as they include a Dockerfile. It is the case in this example for *base*, *api* and *frontend*. For all of them you magically get all the [component image rules](#per-component-image-rules) and [component standard rules](#per-component-standard-rules).
+The Makefile provides tooling organized in three layers:
 
-2. All services defined in the docker-compose files [currently enabled by the COMPOSE_FILE variable](https://docs.docker.com/compose/reference/envvars/#compose_file) automatically get the [component lifecycle rules](#per-component-lifecycle-rules).
+1. Builds: a folder at level one will be considered a *component* of the architecture as soon as it includes a Dockerfile. It is the case above for *base*, *api* and *frontend*. For all of them you magically get all the [component image rules](#per-component-image-rules) and [component test rules](#per-component-test-rules).
 
-3. It provides 'magic' but it is still based on *make* so you can [configure or override](#configure-it-optional) things and even [extend](#extend-it) them globally or on a component basis using `config.mk` and `makefile.mk` files. This allows you to extend rules without changing the original makefile so that you can get [bugfixes and improvements](#how-to-update)
+2. Lifecycle: All services defined in the docker-compose files [currently enabled by the COMPOSE_FILE variable](https://docs.docker.com/compose/reference/envvars/#compose_file) automatically get the [component lifecycle rules](#per-component-lifecycle-rules).
 
-## Configure it (optional)
+3. Extension: It provides 'magic' but it is still based on *make* so you can [configure or override](#configure-it-optional) things and even [extend](#extend-it) them globally or on a component basis using `config.mk` and `makefile.mk` files. This allows you to extend rules without changing the original Makefile so that you can get [bugfixes and improvements](#how-to-update)
+
+The three layers are independent of each other. In particular the Builds layer only requires docker, so the build tooling works even if you use another orchestrator than docker-compose.
+
+## Configuration
 
 The first time you run one of the Makefile's rules, it will create a config.mk where you can configure the name of your project (it defaults to your project's folder name). That name will be used as a prefix for all the subsequent images built.
 
@@ -112,20 +114,20 @@ DOCKER_COMPOSE :=
 DOCKER_BUILD_ARGS :=
 
 # Which command is used to scan docker images (defaults to 'docker scan')
-DOCKER_SCAN := 
+DOCKER_SCAN :=
 
 # Docker scan extra options (optional)
-DOCKER_SCAN_ARGS := 
+DOCKER_SCAN_ARGS :=
 
 # Should docker scan fail on errors (true/false, defaults to 'true')
 # When running the `make scan` rule with this setting to true
 # the scan will stop at the first image with vulnerabilities
-DOCKER_SCAN_FAIL_ON_ERR := 
+DOCKER_SCAN_FAIL_ON_ERR :=
 ```
 
 It is important to note that these variables can also be overriden by exporting environment variables, e.g. `DOCKER_TAG=test make images`.
 
-## Extend it
+## Extensions
 
 You can add global rules in your `config.mk` and ad-hoc component rules in `makefile.mk` files.
 
@@ -150,7 +152,7 @@ As soon as you create one of them it will be included automatically. You can see
 * `make restart`: restarts the docker-compose project
 * `make ps`: alias for docker-compose ps
 
-### General standard rules
+### General test rules
 
 * `make tests`: Runs all tests (equivalent to `tests.unit` then `tests.integration`)
 * `make tests.unit`: Runs all unit tests on all components
@@ -176,13 +178,11 @@ For every docker component in your repo, you can run:
 * `make {component}.logs`: tails the logs of the component
 * `make {component}.bash`: gets a bash on the component
 
-You might wonder why we have both `make {component}.up` and `make {component}.on`. The reason is that they behave differently: the former will first rebuild the image when needed (if files or dependencies have changed) while the latter is just an alias for `docker-compose up -d component`.
+`make {component}.up` and `make {component}.on` behave slightly differently: the former will first rebuild the image when needed (if files or dependencies have changed) while the latter simply starts the component using the last known image.
 
-> Ok, and the difference between `make {component}.down` and `make {component}.off`?
+`make {component}.down` and `make {component}.off` behave exactly the same way, they stop the component. It is just for  consistency: if we can start things with both `up` and `on` one would expect to have both `down` and `off`.
 
-They behave exactly the same way and alias `docker-compose stop component`. It is just for  consistency: if we can start things with both `up` and `on` one would expect to have both `down` and `off`.
-
-### Per-component standard rules
+### Per-component test rules
 
 * `make {component}.tests`: Runs all tests for the component (equivalent to `{component}.tests.unit` then `{component}.tests.integration`)
 * `make {component}.tests.unit`: Runs all the component's unit tests
@@ -209,11 +209,11 @@ This can be expressed in the component's `makefile.mk` like we do in [api/makefi
 
 In our example it means that *make* will know that the *base* component has to be built __before__ *api*. Not only that, but also any rebuild of *base* should retrigger a build of *api*.
 
-## FAQ
+### Having a different shell per component
 
-**Question:** I'd love to use `make {component}.bash` but my image does not include bash (e.g: [alpine](https://hub.docker.com/_/alpine) based images)
+The `make {component}.bash` rule assumes that your component's image has `bash` installed. Not all of them do (e.g: [alpine](https://hub.docker.com/_/alpine), so the rule may not always work out of the box.
 
-**Answer:** You can override the shell that is run by creating a `{component}_SHELL` override. [See our example](api/makefile.mk#L2).
+You can override the shell that is run by creating a `{component}_SHELL` override in the component's `makefile.mk`. [See our example](api/makefile.mk#L2).
 
 ## Under the hood
 
