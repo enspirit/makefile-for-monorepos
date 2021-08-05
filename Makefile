@@ -50,7 +50,7 @@ DOCKER_SCAN_FAIL_ON_ERR := $(or ${DOCKER_SCAN_FAIL_ON_ERR},${DOCKER_SCAN_FAIL_ON
 DOCKER_COMPOSE := $(or ${DOCKER_COMPOSE},${DOCKER_COMPOSE},docker-compose)
 
 ## The list of components being docker based (= component folder includes a Dockerfile)
-DOCKER_COMPONENTS := $(shell find * -name "Dockerfile" -maxdepth 1 -exec dirname {} \;)
+DOCKER_COMPONENTS := $(DOCKER_COMPONENTS) $(shell find * -name "Dockerfile" -maxdepth 1 -exec dirname {} \;)
 
 ## The list of services defined in the (enabled) docker-compose files
 COMPOSE_SERVICES := $(shell $(DOCKER_COMPOSE) config --services)
