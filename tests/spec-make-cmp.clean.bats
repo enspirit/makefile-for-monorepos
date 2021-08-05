@@ -12,3 +12,4 @@ load test_helper
   [ "$status" -eq 2 ]
   echo $output | grep "No rule to make target"
 }
+

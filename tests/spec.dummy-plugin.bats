@@ -2,14 +2,15 @@
 
 load test_helper
 
-@test "'make dummy' works" {
+@test "(dummy plugin) 'make dummy' works" {
   run make dummy
   [ "$status" -eq 0 ]
 }
 
-@test "'make <comp>.dummy.example' works" {
+@test "(dummy plugin) 'make <comp>.dummy.example' works" {
   run make api.dummy.example
   [ "$status" -eq 0 ]
   echo $output
   [ "$output" = "Some dummy example for api" ]
 }
+
