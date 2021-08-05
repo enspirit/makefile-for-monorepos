@@ -7,13 +7,9 @@ MAKEFLAGS += --warn-undefined-variables
 MAKEFLAGS += --no-builtin-rules
 
 ###
-### Generates a dynamic Makefile from the makefile.mk files that can be found
-### in components folders
+### Automatically include components' extensions and ad-hoc rules (makefile.mk)
 ###
-.build/bootstrap.mk: $(shell find * -name makefile.mk -maxdepth 1)
-	@mkdir -p .build
-	@( $(foreach M,$?,echo -e '-include $M';) ) > $@
--include .build/bootstrap.mk
+-include */makefile.mk
 
 ################################################################################
 ### Config variables
