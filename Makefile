@@ -6,7 +6,7 @@ SHELL := bash
 MAKEFLAGS += --warn-undefined-variables
 MAKEFLAGS += --no-builtin-rules
 
-###
+################################################################################
 ### Automatically include components' extensions and ad-hoc rules (makefile.mk)
 ###
 -include */makefile.mk
@@ -54,6 +54,13 @@ DOCKER_COMPONENTS := $(shell find * -name "Dockerfile" -maxdepth 1 -exec dirname
 
 ## The list of services defined in the (enabled) docker-compose files
 COMPOSE_SERVICES := $(shell $(DOCKER_COMPOSE) config --services)
+
+################################################################################
+### Automatically include plugins when present
+###
+
+MK_PLUGINS_DIR := $(or ${MK_PLUGINS_DIR},${MK_PLUGINS_DIR},.mkplugins)
+-include $(MK_PLUGINS_DIR)/*.mk
 
 ################################################################################
 ### Image rules
