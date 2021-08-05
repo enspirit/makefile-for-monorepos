@@ -5,7 +5,7 @@
 ### directory. The resulting image name will follow the format
 ### {project}/{component}.{subname}:{tag}
 ###
-### Subcomponents automatically image rules like subcomponent but including
+### Subcomponents automatically get image rules like subcomponents, but including
 ### their subname:
 ###
 ### * make {component}.{subname}.image
