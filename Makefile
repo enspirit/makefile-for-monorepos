@@ -184,33 +184,33 @@ $(foreach component,$(DOCKER_COMPONENTS),$(eval $(call make-standard-rules,$(com
 
 # Shortcut over docker-compose ps
 ps:
-	$(DOCKER_COMPOSE) ps
+	@$(DOCKER_COMPOSE) ps
 
 # Puts the software up.
 #
 up: $(addsuffix .image,$(DOCKER_COMPONENTS))
 up:
-	$(DOCKER_COMPOSE) up -d
-	$(DOCKER_COMPOSE) ps
+	@$(DOCKER_COMPOSE) up -d
+	@$(DOCKER_COMPOSE) ps
 
 # Restarts the software without rebuilding images
 #
 # Faster than up
 restart:
-	$(DOCKER_COMPOSE) restart
+	@$(DOCKER_COMPOSE) restart
 
 # Puts the entire software down.
 #
 # All docker containers are stopped.
 down:
-	$(DOCKER_COMPOSE) stop
+	@$(DOCKER_COMPOSE) stop
 
 define make-lifecycle-rules
 .PHONY: $1.down $1.image $1.up $1.on $1.off $1.restart $1.logs $1.bash
 
 # Shuts the component down
 $1.down:
-	$(DOCKER_COMPOSE) stop $1
+	@$(DOCKER_COMPOSE) stop $1
 
 # Builds the image
 # We create an empty rule for all DOCKER_COMPONENTS
