@@ -44,7 +44,7 @@ DOCKER_BUILD_ARGS :=
 DOCKER_SCAN := $(or ${DOCKER_SCAN},${DOCKER_SCAN},docker scan)
 
 # Docker scan extra options
-DOCKER_SCAN_ARGS := 
+DOCKER_SCAN_ARGS :=
 
 # Docker scan extra options
 DOCKER_SCAN_FAIL_ON_ERR := $(or ${DOCKER_SCAN_FAIL_ON_ERR},${DOCKER_SCAN_FAIL_ON_ERR},true)
@@ -62,29 +62,29 @@ COMPOSE_SERVICES := $(shell $(DOCKER_COMPOSE) config --services)
 ################################################################################
 ### Image rules
 ###
-.PHONY: images clean push-images pull-images scan
+.PHONY: images clean images.push images.pull images.scan
 
 images: $(addsuffix .image,$(DOCKER_COMPONENTS))
 clean:: $(addsuffix .clean,$(DOCKER_COMPONENTS))
 
 # Pushes all docker images of all components to the private registry
 #
-# An individual .push task exists on each component as well
-push-images: $(addsuffix .push,$(DOCKER_COMPONENTS))
+# An individual .image.push task exists on each component as well
+images.push: $(addsuffix .image.push,$(DOCKER_COMPONENTS))
 
 # Pulls all docker images of all components from the private registry
 #
-# An individual .pull task exists on each component as well
-pull-images: $(addsuffix .pull,$(DOCKER_COMPONENTS))
+# An individual .image.pull task exists on each component as well
+images.pull: $(addsuffix .image.pull,$(DOCKER_COMPONENTS))
 
 # Scan docker images for vulnerabilities
 #
-# An individual .scan task exists on each component as well
-scan: $(addsuffix .scan,$(DOCKER_COMPONENTS))
+# An individual .image.scan task exists on each component as well
+images.scan: $(addsuffix .image.scan,$(DOCKER_COMPONENTS))
 
 define make-image-rules
 
-.PHONY: $1.clean $1.push $1.pull
+.PHONY: $1.clean $1.image $.image.push $1.image.pull $1.image.scan
 
 ## docker build context is overridable but defaults to the component folder
 ## Example of override:
@@ -111,12 +111,12 @@ $1.image:: .build/$1/Dockerfile.built
 .build/$1/Dockerfile.built: $(foreach dep,$($1_DEPS),.build/$(dep)/Dockerfile.built)
 
 # Scans the image for vulnerabilities
-$1.scan:: $1.image
+$1.image.scan:: $1.image
 	@echo -e "--- Scanning $(PROJECT)/$1:${DOCKER_TAG} for vulnerabilities ---"
 	@${DOCKER_SCAN} ${DOCKER_SCAN_ARGS} $(PROJECT)/$1:${DOCKER_TAG} || !${DOCKER_SCAN_FAIL_ON_ERR}
-	
+
 # Pushes the image to the private repository
-$1.push: .build/$1/Dockerfile.pushed
+$1.image.push: .build/$1/Dockerfile.pushed
 .build/$1/Dockerfile.pushed: .build/$1/Dockerfile.built
 	@if [ -z "$(DOCKER_REGISTRY)" ]; then \
 		echo "No private registry defined, ignoring. (set DOCKER_REGISTRY or place it in .env file)"; \
@@ -129,7 +129,7 @@ $1.push: .build/$1/Dockerfile.pushed
 	@touch .build/$1/Dockerfile.pushed
 
 # Pull the latest image version from the private repository
-$1.pull::
+$1.image.pull::
 	@echo
 	@echo -e "--- Pulling $(DOCKER_REGISTRY)/$(PROJECT)/$1:${DOCKER_TAG} as ${PROJECT}/$1:${DOCKER_TAG} ---"
 	@docker pull $(DOCKER_REGISTRY)/$(PROJECT)/$1:${DOCKER_TAG}
@@ -164,10 +164,10 @@ define make-standard-rules
 $1.tests: $1.tests.unit $1.tests.integration
 
 # Placeholder for the running of unit tests, you can override that in your component's makefile.mk
-$1.tests.unit:: 
+$1.tests.unit::
 
 # Placeholder for the running of integration tests, you can override that in your component's makefile.mk
-$1.tests.integration:: 
+$1.tests.integration::
 
 endef
 $(foreach component,$(DOCKER_COMPONENTS),$(eval $(call make-standard-rules,$(component))))
