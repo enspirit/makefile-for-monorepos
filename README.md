@@ -13,8 +13,8 @@ We want to have reproducible builds and tooling allowing us to work the same way
 This Makefile is an open-source consolidation of years of work to achieve that goal. Why don't you see for yourself:
 
 ```bash
-git clone git@github.com:enspirit/monorepo-example.git
-cd monorepo-example
+git clone git@github.com:enspirit/makefile-for-monorepos.git
+cd makefile-for-monorepos
 
 make up
 ```
@@ -41,12 +41,12 @@ _n.b. make sure you are inside the folder of your monorepo project._
 
 Option 1, with wget:
 ```bash
-wget https://raw.githubusercontent.com/enspirit/monorepo-example/master/Makefile
+wget https://raw.githubusercontent.com/enspirit/makefile-for-monorepos/master/Makefile
 ```
 
 Option 2, with curl:
 ```bash
-curl https://raw.githubusercontent.com/enspirit/monorepo-example/master/Makefile -o Makefile
+curl https://raw.githubusercontent.com/enspirit/makefile-for-monorepos/master/Makefile -o Makefile
 ```
 
 ## Conventions
@@ -55,7 +55,7 @@ By following some conventions our Makefile adds some magic. Let's consider the f
 structure of this very repository:
 
 ```
-monorepo-example
+monorepo
 ├── base                       # A component used as a base for others (dependency)
 │   └── Dockerfile             # ... with its Dockerfile
 ├── api                        # An api component
