@@ -190,7 +190,7 @@ ps:
 #
 up: $(addsuffix .image,$(DOCKER_COMPONENTS))
 up:
-	@$(DOCKER_COMPOSE) up -d
+	@$(DOCKER_COMPOSE) up --force-recreate -d
 	@$(DOCKER_COMPOSE) ps
 
 # Restarts the software without rebuilding images
