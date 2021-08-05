@@ -4,6 +4,10 @@ This project provides a reusable Makefile for architectures with multiple softwa
 
 Everything else apart from the Makefile is just us showcasing its usage and capabilities.
 
+## Quick showcase video
+
+[![Quick Showcase Video](https://img.youtube.com/vi/dvBKAQKuk2s/0.jpg)](http://www.youtube.com/watch?v=dvBKAQKuk2s)
+
 ## Why?
 
 At Enspirit we have embraced [docker](https://www.docker.com/), [docker-compose](https://docs.docker.com/compose/) and [monorepositories](https://en.wikipedia.org/wiki/Monorepo). Our team is usually rotating among multiple software projects.
