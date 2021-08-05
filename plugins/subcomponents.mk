@@ -24,7 +24,7 @@
 ###
 
 ## The list of sub-components (= full path of all {component}/Dockerfile.*)
-DOCKER_SUB_COMPONENTS := $(shell find * -name "Dockerfile.*" -maxdepth 1)
+DOCKER_SUB_COMPONENTS := $(shell find * -maxdepth 1 -mindepth 1 -name "Dockerfile.*")
 
 ###
 ### Arguments:
