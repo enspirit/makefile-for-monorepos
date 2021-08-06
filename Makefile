@@ -21,11 +21,6 @@ MAKEFLAGS += --no-builtin-rules
 -include .env
 .EXPORT_ALL_VARIABLES: ;
 
-# Include the config
--include config.mk
-config.mk:
-	@echo "PROJECT := ${shell basename ${PWD}}" > config.mk
-
 # Docker registry to be used
 DOCKER_REGISTRY := $(or ${DOCKER_REGISTRY},${DOCKER_REGISTRY},docker.io)
 
@@ -56,6 +51,13 @@ DOCKER_COMPONENTS := $(DOCKER_COMPONENTS) $(shell find * -maxdepth 1 -mindepth 1
 
 ## The list of services defined in the (enabled) docker-compose files
 COMPOSE_SERVICES := $(shell command -v $(DOCKER_COMPOSE) > /dev/null && $(DOCKER_COMPOSE) config --services 2>/dev/null || true)
+
+################################################################################
+### Include config.mk
+###
+-include config.mk
+config.mk:
+	@echo "PROJECT := ${shell basename ${PWD}}" > config.mk
 
 ################################################################################
 ### Automatically include plugins when present
