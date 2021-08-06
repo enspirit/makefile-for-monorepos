@@ -36,13 +36,13 @@ DOCKER_TAG := $(or ${DOCKER_TAG},${DOCKER_TAG},latest)
 DOCKER_BUILD := $(or ${DOCKER_BUILD},${DOCKER_BUILD},docker build)
 
 # Docker build extra options for all builds (optional)
-DOCKER_BUILD_ARGS :=
+DOCKER_BUILD_ARGS := $(or ${DOCKER_BUILD_ARGS},${DOCKER_BUILD_ARGS},)
 
 # Which command is used to scan docker images
 DOCKER_SCAN := $(or ${DOCKER_SCAN},${DOCKER_SCAN},docker scan)
 
 # Docker scan extra options
-DOCKER_SCAN_ARGS :=
+DOCKER_SCAN_ARGS := $(or ${DOCKER_SCAN_ARGS},${DOCKER_SCAN_ARGS},)
 
 # Docker scan extra options
 DOCKER_SCAN_FAIL_ON_ERR := $(or ${DOCKER_SCAN_FAIL_ON_ERR},${DOCKER_SCAN_FAIL_ON_ERR},true)
