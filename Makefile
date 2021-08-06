@@ -9,11 +9,6 @@ MAKEFLAGS += --warn-undefined-variables
 MAKEFLAGS += --no-builtin-rules
 
 ################################################################################
-### Automatically include components' extensions and ad-hoc rules (makefile.mk)
-###
--include */makefile.mk
-
-################################################################################
 ### Config variables
 ###
 
@@ -58,6 +53,11 @@ COMPOSE_SERVICES := $(shell command -v $(DOCKER_COMPOSE) > /dev/null && $(DOCKER
 -include config.mk
 config.mk:
 	@echo "PROJECT := ${shell basename ${PWD}}" > config.mk
+
+################################################################################
+### Automatically include components' extensions and ad-hoc rules (makefile.mk)
+###
+-include */makefile.mk
 
 ################################################################################
 ### Automatically include plugins when present
