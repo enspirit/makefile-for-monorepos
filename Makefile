@@ -60,10 +60,24 @@ config.mk:
 -include */makefile.mk
 
 ################################################################################
-### Automatically include plugins when present
+### Plugins
 ###
 
+# Defines where are located the plugins (defaults to '.mkplugins')
 MK_PLUGINS_DIR := $(or ${MK_PLUGINS_DIR},${MK_PLUGINS_DIR},.mkplugins)
+
+# Will contain the list of plugins that are present
+MK_PLUGINS :=
+
+# Function that plugins should call, providing their name
+#
+# $1 plugin name
+define mk-plugin-subscribe
+MK_PLUGINS += $(strip $$1)
+endef
+export mk-plugin-subscribe
+
+# Automatically include plugins that are present
 -include $(MK_PLUGINS_DIR)/*.mk
 
 ################################################################################

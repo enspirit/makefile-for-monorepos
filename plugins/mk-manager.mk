@@ -6,6 +6,9 @@
 ### * make Makefile.upgrade checks for new versions and downloads them.
 ###
 
+# Subscribe the plugin
+$(eval $(call mk-plugin-subscribe) mk-manager)
+
 # Which github repo hosts the Makefile
 # You can fork us on github, override this variable in your config.mk
 # and get updates from your own clone.
@@ -52,3 +55,6 @@ Makefile.upgrade:
 	fi
 	@makefile_download_url=`curl -s $(MK_GH_LATEST_RELEASE) | jq -r '.assets[] | select(.name=="Makefile") | .browser_download_url'`
 	$(call upgrade-makefile,$$latest_version,$$makefile_download_url)
+
+.PHONY: Makefile.plugins.list
+Makefile.plugins.list: $(addsuffix .info,$(MK_PLUGINS))
