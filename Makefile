@@ -150,17 +150,17 @@ $(foreach component,$(DOCKER_COMPONENTS),$(eval $(call make-image-rules,$(compon
 
 .PHONY: tests tests.unit tests.integration
 
-tests: tests.unit tests.integration
+tests:: tests.unit tests.integration
 
 # Run unit tests on all components
 #
 # An individual .test.unit task exists on each component as well
-tests.unit: $(addsuffix .tests.unit,$(DOCKER_COMPONENTS))
+tests.unit:: $(addsuffix .tests.unit,$(DOCKER_COMPONENTS))
 
 # Run integration tests on all components
 #
 # An individual .test.integration task exists on each component as well
-tests.integration: $(addsuffix .tests.integration,$(DOCKER_COMPONENTS))
+tests.integration:: $(addsuffix .tests.integration,$(DOCKER_COMPONENTS))
 
 define make-standard-rules
 
