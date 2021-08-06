@@ -45,12 +45,12 @@ _n.b. make sure you are inside the folder of your monorepo project._
 
 Option 1, with wget:
 ```bash
-wget https://raw.githubusercontent.com/enspirit/makefile-for-monorepos/master/Makefile
+wget https://raw.githubusercontent.com/enspirit/makefile-for-monorepos/1.0.0/Makefile
 ```
 
 Option 2, with curl:
 ```bash
-curl https://raw.githubusercontent.com/enspirit/makefile-for-monorepos/master/Makefile -o Makefile
+curl https://raw.githubusercontent.com/enspirit/makefile-for-monorepos/1.0.0/Makefile -o Makefile
 ```
 
 ## Conventions
