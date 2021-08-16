@@ -140,12 +140,12 @@ $1.image.push: .build/$1/Dockerfile.pushed
 $1.image.pull: .build/$1/Dockerfile.pulled
 $1_IMAGE_PULL_FORCE := $(or ${$1_IMAGE_PULL_FORCE},${$1_IMAGE_PULL_FORCE},)
 .build/$1/Dockerfile.pulled:
-	mkdir -p .build/$1/
+	@mkdir -p .build/$1/
 	@echo
 	@echo -e "--- Pulling $(DOCKER_REGISTRY)/$(PROJECT)/$1:${DOCKER_TAG} as ${PROJECT}/$1:${DOCKER_TAG} ---"
 	@docker pull $(DOCKER_REGISTRY)/$(PROJECT)/$1:${DOCKER_TAG}
 	@docker tag $(DOCKER_REGISTRY)/$(PROJECT)/$1:${DOCKER_TAG} ${PROJECT}/$1:${DOCKER_TAG}
-	[ ! -z "$($1_IMAGE_PULL_FORCE)" ] || touch .build/$1/Dockerfile.pulled
+	@[ ! -z "$($1_IMAGE_PULL_FORCE)" ] || touch .build/$1/Dockerfile.pulled
 
 
 endef
