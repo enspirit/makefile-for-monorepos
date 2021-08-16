@@ -108,7 +108,7 @@ $1.clean::
 
 # Build the image and touch the corresponding .log and .built sentinel files
 $1.image:: .build/$1/Dockerfile.built
-.build/$1/Dockerfile.built: $($1_DOCKER_FILE) $(shell git ls-files $1 | grep -v makefile.mk | sed 's/ /\\ /g')
+.build/$1/Dockerfile.built: $($1_DOCKER_FILE) $(shell git ls-files --recurse-submodules $1 | grep -v makefile.mk | sed 's/ /\\ /g')
 	@mkdir -p .build/$1
 	@echo -e "--- Building $(PROJECT)/$1:${DOCKER_TAG} ---"
 	@${DOCKER_BUILD} ${DOCKER_BUILD_ARGS} ${$1_DOCKER_BUILD_ARGS} -f $${$1_DOCKER_FILE} -t $(PROJECT)/$1:${DOCKER_TAG} $${$1_DOCKER_CONTEXT} | tee .build/$1/Dockerfile.log
