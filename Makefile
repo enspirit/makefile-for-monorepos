@@ -47,6 +47,9 @@ DOCKER_COMPONENTS := $(DOCKER_COMPONENTS) $(shell find * -maxdepth 1 -mindepth 1
 ## The list of services defined in the (enabled) docker-compose files
 COMPOSE_SERVICES := $(shell command -v $(DOCKER_COMPOSE) > /dev/null && $(DOCKER_COMPOSE) config --services 2>/dev/null || true)
 
+## Directory where the sentinel files are placed
+SENTINEL_FILE_DIR := $(or ${SENTINEL_FILE_DIR},${SENTINEL_FILE_DIR},.build)
+
 ################################################################################
 ### Include config.mk
 ###
@@ -104,19 +107,19 @@ $1_DOCKER_CONTEXT := $(or ${$1_DOCKER_CONTEXT},${$1_DOCKER_CONTEXT},$3)
 
 # Remove docker build assets
 $1.clean::
-	@rm -rf .build/$1
+	@rm -rf $(SENTINEL_FILE_DIR)/$1
 
 # Build the image and touch the corresponding .log and .built sentinel files
-$1.image:: .build/$1/Dockerfile.built
-.build/$1/Dockerfile.built: $($1_DOCKER_FILE) $(shell git ls-files --recurse-submodules $1 | grep -v makefile.mk | sed 's/ /\\ /g')
-	@mkdir -p .build/$1
+$1.image:: $(SENTINEL_FILE_DIR)/$1/Dockerfile.built
+$(SENTINEL_FILE_DIR)/$1/Dockerfile.built: $($1_DOCKER_FILE) $(shell git ls-files --recurse-submodules $1 | grep -v makefile.mk | sed 's/ /\\ /g')
+	@mkdir -p $(SENTINEL_FILE_DIR)/$1
 	@echo -e "--- Building $(PROJECT)/$1:${DOCKER_TAG} ---"
-	@${DOCKER_BUILD} ${DOCKER_BUILD_ARGS} ${$1_DOCKER_BUILD_ARGS} -f $${$1_DOCKER_FILE} -t $(PROJECT)/$1:${DOCKER_TAG} $${$1_DOCKER_CONTEXT} | tee .build/$1/Dockerfile.log
-	@touch .build/$1/Dockerfile.built
+	@${DOCKER_BUILD} ${DOCKER_BUILD_ARGS} ${$1_DOCKER_BUILD_ARGS} -f $${$1_DOCKER_FILE} -t $(PROJECT)/$1:${DOCKER_TAG} $${$1_DOCKER_CONTEXT} | tee $(SENTINEL_FILE_DIR)/$1/Dockerfile.log
+	@touch $(SENTINEL_FILE_DIR)/$1/Dockerfile.built
 
 # Components can have dependencies on others thanks to the <t>_DEPS variables
 # where <t> is the name of the component
-.build/$1/Dockerfile.built: $(foreach dep,$($1_DEPS),.build/$(dep)/Dockerfile.built)
+$(SENTINEL_FILE_DIR)/$1/Dockerfile.built: $(foreach dep,$($1_DEPS),$(SENTINEL_FILE_DIR)/$(dep)/Dockerfile.built)
 
 # Scans the image for vulnerabilities
 $1.image.scan:: $1.image
@@ -124,8 +127,8 @@ $1.image.scan:: $1.image
 	@${DOCKER_SCAN} ${DOCKER_SCAN_ARGS} $(PROJECT)/$1:${DOCKER_TAG} || !${DOCKER_SCAN_FAIL_ON_ERR}
 
 # Pushes the image to the private repository
-$1.image.push: .build/$1/Dockerfile.pushed
-.build/$1/Dockerfile.pushed: .build/$1/Dockerfile.built
+$1.image.push: $(SENTINEL_FILE_DIR)/$1/Dockerfile.pushed
+$(SENTINEL_FILE_DIR)/$1/Dockerfile.pushed: $(SENTINEL_FILE_DIR)/$1/Dockerfile.built
 	@if [ -z "$(DOCKER_REGISTRY)" ]; then \
 		echo "No private registry defined, ignoring. (set DOCKER_REGISTRY or place it in .env file)"; \
 		return 1; \
@@ -133,19 +136,19 @@ $1.image.push: .build/$1/Dockerfile.pushed
 	@echo
 	@echo -e "--- Pushing $(DOCKER_REGISTRY)/$(PROJECT)/$1:${DOCKER_TAG} ---"
 	@docker tag $(PROJECT)/$1:${DOCKER_TAG} $(DOCKER_REGISTRY)/$(PROJECT)/$1:${DOCKER_TAG}
-	@docker push $(DOCKER_REGISTRY)/$(PROJECT)/$1:${DOCKER_TAG} | tee -a .build/$1/Dockerfile.push.log
-	@touch .build/$1/Dockerfile.pushed
+	@docker push $(DOCKER_REGISTRY)/$(PROJECT)/$1:${DOCKER_TAG} | tee -a $(SENTINEL_FILE_DIR)/$1/Dockerfile.push.log
+	@touch $(SENTINEL_FILE_DIR)/$1/Dockerfile.pushed
 
 # Pull the latest image version from the private repository
-$1.image.pull: .build/$1/Dockerfile.pulled
+$1.image.pull: $(SENTINEL_FILE_DIR)/$1/Dockerfile.pulled
 $1_IMAGE_PULL_FORCE := $(or ${$1_IMAGE_PULL_FORCE},${$1_IMAGE_PULL_FORCE},)
-.build/$1/Dockerfile.pulled:
-	@mkdir -p .build/$1/
+$(SENTINEL_FILE_DIR)/$1/Dockerfile.pulled:
+	@mkdir -p $(SENTINEL_FILE_DIR)/$1/
 	@echo
 	@echo -e "--- Pulling $(DOCKER_REGISTRY)/$(PROJECT)/$1:${DOCKER_TAG} as ${PROJECT}/$1:${DOCKER_TAG} ---"
 	@docker pull $(DOCKER_REGISTRY)/$(PROJECT)/$1:${DOCKER_TAG}
 	@docker tag $(DOCKER_REGISTRY)/$(PROJECT)/$1:${DOCKER_TAG} ${PROJECT}/$1:${DOCKER_TAG}
-	@[ ! -z "$($1_IMAGE_PULL_FORCE)" ] || touch .build/$1/Dockerfile.pulled
+	@[ ! -z "$($1_IMAGE_PULL_FORCE)" ] || touch $(SENTINEL_FILE_DIR)/$1/Dockerfile.pulled
 
 
 endef

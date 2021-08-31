@@ -283,3 +283,15 @@ Our Makefile is using this in the following ways:
 * That rule produces the sentinel file after building the image, like in the example above.
 * When listing [inter component dependencies](#inter-component-dependencies) we generate additional prerequisites that use the dependencies' sentinels as prerequisites. This way we can ensure that our dependent images rebuild when their dependencies change.
 * `make {component}.push` is another example of such usage. It lists `.build/{component}/Dockerfile.pushed` as a prerequisite. The rule for it, in turn, lists `.build/{component}/Dockerfile.built` as a prerequisite. This means that if you already pushed your image and that none of its files (nor dependencies) have changed: there is no need to push it again.
+* The location of the sentinel files defaults to `.build`, but is configurable by setting the `SENTINEL_FILE_DIR` variable.
+
+## Development
+### Unit Tests
+Unit tests can be found in the `tests` directory. They require that [docker-compose](https://docs.docker.com/compose/) be installed.
+
+To run the unit tests follow these steps from the main repository directory:
+1. Build the test docker image, `docker build . -t monorepo/tests -f tests/Dockerfile`.
+2. Start the container, `docker-compose up`.
+3. In a separate terminal, run the tests, `make tests.tests.unit`.
+4. Verify all tests passed.
+5. Clean up, `docker-compose stop`.
