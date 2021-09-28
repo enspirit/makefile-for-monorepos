@@ -4,6 +4,8 @@ This project provides a reusable Makefile for architectures with multiple softwa
 
 Everything else apart from the Makefile is just us showcasing its usage and capabilities.
 
+:warning: This Makefile requires make >= 3.82 :warning:
+
 ## Quick showcase video
 
 [![Quick Showcase Video](https://img.youtube.com/vi/dvBKAQKuk2s/0.jpg)](http://www.youtube.com/watch?v=dvBKAQKuk2s)
