@@ -1,7 +1,7 @@
 ## Version of this Makefile
 MK_VERSION := 1.0.1
 ## Better defaults for make (thanks https://tech.davis-hansson.com/p/make/)
-SHELL := bash
+SHELL := bash -o pipefail
 .ONESHELL:
 .SHELLFLAGS := -eu -o pipefail -c
 .DELETE_ON_ERROR:
