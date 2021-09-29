@@ -71,3 +71,9 @@ load test_helper
   DOCKER_TAG=test make api.image
   has_built monorepo/api:test
 }
+
+@test "'make <comp>.image' passes the proper context when overriden" {
+  make complex.image
+  # Second parameter is context path
+  has_built monorepo/complex:latest complex/app
+}
