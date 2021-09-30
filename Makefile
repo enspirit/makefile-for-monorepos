@@ -89,6 +89,23 @@ images.pull: $(addsuffix .image.pull,$(DOCKER_COMPONENTS))
 # An individual .image.scan task exists on each component as well
 images.scan: $(addsuffix .image.scan,$(DOCKER_COMPONENTS))
 
+#
+# Default function to find the prerequisites of a component
+# This default implementation lists the dockerfile as a prerequisite and
+# uses "git ls-files" to compute the list of files present in the component's build context.
+#
+# This implementation can be overridden from the outside
+#
+# Params:
+# $1: the docker file
+# $2: the docker context
+#
+ifndef find-component-prerequisites
+define find-component-prerequisites
+$1 $$(shell git ls-files --recurse-submodules $2 | grep -v makefile.mk | sed 's/ /\\ /g')
+endef
+endif
+
 ###
 ### Arguments:
 ### $1: component name
@@ -101,6 +118,7 @@ define make-image-rules
 
 $1_DOCKER_FILE := $(or ${$1_DOCKER_FILE},${$1_DOCKER_FILE},$2)
 $1_DOCKER_CONTEXT := $(or ${$1_DOCKER_CONTEXT},${$1_DOCKER_CONTEXT},$3)
+$1_PREREQUISITES := $(or ${$1_PREREQUISITES},${$1_PREREQUISITES},$(call find-component-prerequisites,$${$1_DOCKER_FILE},$${$1_DOCKER_CONTEXT}))
 
 # Remove docker build assets
 $1.clean::
@@ -108,7 +126,7 @@ $1.clean::
 
 # Build the image and touch the corresponding .log and .built sentinel files
 $1.image:: .build/$1/Dockerfile.built
-.build/$1/Dockerfile.built: $($1_DOCKER_FILE) $(shell git ls-files --recurse-submodules $1 | grep -v makefile.mk | sed 's/ /\\ /g')
+.build/$1/Dockerfile.built: $$($1_PREREQUISITES)
 	@mkdir -p .build/$1
 	@echo -e "--- Building $(PROJECT)/$1:${DOCKER_TAG} ---"
 	@${DOCKER_BUILD} ${DOCKER_BUILD_ARGS} ${$1_DOCKER_BUILD_ARGS} -f $${$1_DOCKER_FILE} -t $(PROJECT)/$1:${DOCKER_TAG} $${$1_DOCKER_CONTEXT} | tee .build/$1/Dockerfile.log
