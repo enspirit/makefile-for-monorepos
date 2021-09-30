@@ -1,3 +1,27 @@
+################################################################################
+#                           _         __ _ _         __                        #
+#            _ __ ___   __ _| | _____ / _(_) | ___   / _| ___  _ __            #
+#           | '_ ` _ \ / _` | |/ / _ \ |_| | |/ _ \ | |_ / _ \| '__|           #
+#           | | | | | | (_| |   <  __/  _| | |  __/ |  _| (_) | |              #
+#           |_| |_| |_|\__,_|_|\_\___|_| |_|_|\___| |_|  \___/|_|              #
+#                                                                              #
+#                                                                              #
+#            _ __ ___   ___  _ __   ___  _ __ ___ _ __   ___  ___              #
+#           | '_ ` _ \ / _ \| '_ \ / _ \| '__/ _ \ '_ \ / _ \/ __|             #
+#           | | | | | | (_) | | | | (_) | | |  __/ |_) | (_) \__ \             #
+#           |_| |_| |_|\___/|_| |_|\___/|_|  \___| .__/ \___/|___/             #
+#                                                |_|                           #
+################################################################################
+#                                                                              #
+# Warning: you are not supposed to modify this file directly but rather use    #
+# config.mk or makefile.mk files to configure/extend it.                       #
+# This would allow you to keep your changes while upgrading to new versions    #
+# of this Makefile.                                                            #
+#                                                                              #
+# See documentation: https://github.com/enspirit/makefile-for-monorepos        #
+#                                                                              #
+################################################################################
+
 ## Version of this Makefile
 MK_VERSION := 1.0.2
 ## Better defaults for make (thanks https://tech.davis-hansson.com/p/make/)
