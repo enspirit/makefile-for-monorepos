@@ -237,11 +237,18 @@ $(foreach component,$(DOCKER_COMPONENTS),$(eval $(call make-standard-rules,$(com
 ps:
 	@$(DOCKER_COMPOSE) ps
 
-# Puts the software up.
+# Puts the software up but first rebuilds components that have changes
 #
 up: $(addsuffix .image,$(DOCKER_COMPONENTS))
 up:
 	@$(DOCKER_COMPOSE) up --force-recreate -d
+	@$(DOCKER_COMPOSE) ps
+
+# Starts the software.
+#
+# Faster than up:
+start:
+	@$(DOCKER_COMPOSE) up -d
 	@$(DOCKER_COMPOSE) ps
 
 # Restarts the software without rebuilding images
@@ -249,6 +256,7 @@ up:
 # Faster than up
 restart:
 	@$(DOCKER_COMPOSE) restart
+	@$(DOCKER_COMPOSE) ps
 
 # Puts the entire software down.
 #

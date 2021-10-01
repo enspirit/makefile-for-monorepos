@@ -153,8 +153,9 @@ As soon as you create one of them it will be included automatically. You can see
 
 ### General lifecycle rules
 
-* `make up`: starts the docker-compose project
+* `make up`: build images for components that have changed then force-starts the docker-compose project
 * `make down`: stops the docker-compose project
+* `make start`: starts the docker-compose project
 * `make restart`: restarts the docker-compose project
 * `make ps`: alias for docker-compose ps
 
