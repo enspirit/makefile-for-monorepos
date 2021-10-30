@@ -4,6 +4,8 @@ This project provides a reusable Makefile for architectures with multiple softwa
 
 Everything else apart from the Makefile is just us showcasing its usage and capabilities.
 
+:warning: This Makefile requires make >= 3.82 :warning:
+
 ## Quick showcase video
 
 [![Quick Showcase Video](https://img.youtube.com/vi/dvBKAQKuk2s/0.jpg)](http://www.youtube.com/watch?v=dvBKAQKuk2s)
@@ -45,12 +47,12 @@ _n.b. make sure you are inside the folder of your monorepo project._
 
 Option 1, with wget:
 ```bash
-wget https://raw.githubusercontent.com/enspirit/makefile-for-monorepos/1.0.0/Makefile
+wget https://raw.githubusercontent.com/enspirit/makefile-for-monorepos/1.0.3/Makefile
 ```
 
 Option 2, with curl:
 ```bash
-curl https://raw.githubusercontent.com/enspirit/makefile-for-monorepos/1.0.0/Makefile -o Makefile
+curl https://raw.githubusercontent.com/enspirit/makefile-for-monorepos/1.0.3/Makefile -o Makefile
 ```
 
 ## Conventions
@@ -151,8 +153,9 @@ As soon as you create one of them it will be included automatically. You can see
 
 ### General lifecycle rules
 
-* `make up`: starts the docker-compose project
+* `make up`: build images for components that have changed then force-starts the docker-compose project
 * `make down`: stops the docker-compose project
+* `make start`: starts the docker-compose project
 * `make restart`: restarts the docker-compose project
 * `make ps`: alias for docker-compose ps
 

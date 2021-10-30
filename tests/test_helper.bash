@@ -25,8 +25,14 @@ clear_scan_logs() {
   echo "" > tests/docker-scan.log
 }
 
+# $1 image tag
+# $2 context
 has_built() {
-  grep "tag=$1" tests/docker-build.log
+  if [ ! -z "$2" ]; then
+    grep "tag=$1.*context=$2" tests/docker-build.log
+  else
+    grep "tag=$1" tests/docker-build.log
+  fi
 }
 
 has_not_built() {

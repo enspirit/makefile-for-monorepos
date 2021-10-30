@@ -1,5 +1,29 @@
+################################################################################
+#                           _         __ _ _         __                        #
+#            _ __ ___   __ _| | _____ / _(_) | ___   / _| ___  _ __            #
+#           | '_ ` _ \ / _` | |/ / _ \ |_| | |/ _ \ | |_ / _ \| '__|           #
+#           | | | | | | (_| |   <  __/  _| | |  __/ |  _| (_) | |              #
+#           |_| |_| |_|\__,_|_|\_\___|_| |_|_|\___| |_|  \___/|_|              #
+#                                                                              #
+#                                                                              #
+#            _ __ ___   ___  _ __   ___  _ __ ___ _ __   ___  ___              #
+#           | '_ ` _ \ / _ \| '_ \ / _ \| '__/ _ \ '_ \ / _ \/ __|             #
+#           | | | | | | (_) | | | | (_) | | |  __/ |_) | (_) \__ \             #
+#           |_| |_| |_|\___/|_| |_|\___/|_|  \___| .__/ \___/|___/             #
+#                                                |_|                           #
+################################################################################
+#                                                                              #
+# Warning: you are not supposed to modify this file directly but rather use    #
+# config.mk or makefile.mk files to configure/extend it.                       #
+# This would allow you to keep your changes while upgrading to new versions    #
+# of this Makefile.                                                            #
+#                                                                              #
+# See documentation: https://github.com/enspirit/makefile-for-monorepos        #
+#                                                                              #
+################################################################################
+
 ## Version of this Makefile
-MK_VERSION := 1.0.1
+MK_VERSION := 1.0.3
 ## Better defaults for make (thanks https://tech.davis-hansson.com/p/make/)
 SHELL := bash
 .ONESHELL:
@@ -92,6 +116,23 @@ images.pull: $(addsuffix .image.pull,$(DOCKER_COMPONENTS))
 # An individual .image.scan task exists on each component as well
 images.scan: $(addsuffix .image.scan,$(DOCKER_COMPONENTS))
 
+#
+# Default function to find the prerequisites of a component
+# This default implementation lists the dockerfile as a prerequisite and
+# uses "git ls-files" to compute the list of files present in the component's build context.
+#
+# This implementation can be overridden from the outside
+#
+# Params:
+# $1: the docker file
+# $2: the docker context
+#
+ifndef find-component-prerequisites
+define find-component-prerequisites
+$1 $$(shell git ls-files --recurse-submodules $2 | grep -v makefile.mk | sed 's/ /\\ /g')
+endef
+endif
+
 ###
 ### Arguments:
 ### $1: component name
@@ -104,6 +145,7 @@ define make-image-rules
 
 $1_DOCKER_FILE := $(or ${$1_DOCKER_FILE},${$1_DOCKER_FILE},$2)
 $1_DOCKER_CONTEXT := $(or ${$1_DOCKER_CONTEXT},${$1_DOCKER_CONTEXT},$3)
+$1_PREREQUISITES := $(or ${$1_PREREQUISITES},${$1_PREREQUISITES},$(call find-component-prerequisites,$${$1_DOCKER_FILE},$${$1_DOCKER_CONTEXT}))
 
 # Remove docker build assets
 $1.clean::
@@ -111,7 +153,7 @@ $1.clean::
 
 # Build the image and touch the corresponding .log and .built sentinel files
 $1.image:: $(SENTINEL_FILE_DIR)/$1/Dockerfile.built
-$(SENTINEL_FILE_DIR)/$1/Dockerfile.built: $($1_DOCKER_FILE) $(shell git ls-files --recurse-submodules $1 | grep -v makefile.mk | sed 's/ /\\ /g')
+$(SENTINEL_FILE_DIR)/$1/Dockerfile.built: $$($1_PREREQUISITES)
 	@mkdir -p $(SENTINEL_FILE_DIR)/$1
 	@echo -e "--- Building $(PROJECT)/$1:${DOCKER_TAG} ---"
 	@${DOCKER_BUILD} ${DOCKER_BUILD_ARGS} ${$1_DOCKER_BUILD_ARGS} -f $${$1_DOCKER_FILE} -t $(PROJECT)/$1:${DOCKER_TAG} $${$1_DOCKER_CONTEXT} | tee $(SENTINEL_FILE_DIR)/$1/Dockerfile.log
@@ -198,11 +240,18 @@ $(foreach component,$(DOCKER_COMPONENTS),$(eval $(call make-standard-rules,$(com
 ps:
 	@$(DOCKER_COMPOSE) ps
 
-# Puts the software up.
+# Puts the software up but first rebuilds components that have changes
 #
 up: $(addsuffix .image,$(DOCKER_COMPONENTS))
 up:
 	@$(DOCKER_COMPOSE) up --force-recreate -d
+	@$(DOCKER_COMPOSE) ps
+
+# Starts the software.
+#
+# Faster than up:
+start:
+	@$(DOCKER_COMPOSE) up -d
 	@$(DOCKER_COMPOSE) ps
 
 # Restarts the software without rebuilding images
@@ -210,6 +259,7 @@ up:
 # Faster than up
 restart:
 	@$(DOCKER_COMPOSE) restart
+	@$(DOCKER_COMPOSE) ps
 
 # Puts the entire software down.
 #
