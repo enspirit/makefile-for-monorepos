@@ -71,6 +71,12 @@ DOCKER_COMPONENTS := $(DOCKER_COMPONENTS) $(shell find * -maxdepth 1 -mindepth 1
 ## The list of services defined in the (enabled) docker-compose files
 COMPOSE_SERVICES := $(shell command -v $(DOCKER_COMPOSE) > /dev/null && $(DOCKER_COMPOSE) config --services 2>/dev/null || true)
 
+DO_NOT_BUILD :=
+define filter_components
+DOCKER_COMPONENTS := $(DOCKER_COMPONENTS:$1=)
+endef
+$(foreach component,$(DO_NOT_BUILD),$(eval $(call filter_components,$(component))))
+
 ################################################################################
 ### Include config.mk
 ###
