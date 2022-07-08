@@ -143,6 +143,7 @@ define make-image-rules
 $1_DOCKER_FILE := $(or ${$1_DOCKER_FILE},${$1_DOCKER_FILE},$2)
 $1_DOCKER_CONTEXT := $(or ${$1_DOCKER_CONTEXT},${$1_DOCKER_CONTEXT},$3)
 $1_PREREQUISITES := $(or ${$1_PREREQUISITES},${$1_PREREQUISITES},$(call find-component-prerequisites,$${$1_DOCKER_FILE},$${$1_DOCKER_CONTEXT}))
+$1_DEPS := $(or ${$1_DEPS},${$1_DEPS},)
 
 # Remove docker build assets
 $1.clean::
