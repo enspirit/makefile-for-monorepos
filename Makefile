@@ -170,7 +170,7 @@ $1.image.scan:: $1.image
 
 # Pushes the image to the private repository
 $1.image.push: .build/$1/Dockerfile.pushed
-.build/$1/Dockerfile.pushed: .build/$1/Dockerfile.built
+.build/$1/Dockerfile.pushed:
 	@if [ -z "$(DOCKER_REGISTRY)" ]; then \
 		echo "No private registry defined, ignoring. (set DOCKER_REGISTRY or place it in .env file)"; \
 		return 1; \
