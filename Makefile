@@ -89,8 +89,13 @@ config.mk:
 ### Automatically include plugins when present
 ###
 
+# This is intended for project plugins, stored inside the project itself
 MK_PLUGINS_DIR := $(or ${MK_PLUGINS_DIR},${MK_PLUGINS_DIR},.mkplugins)
 -include $(MK_PLUGINS_DIR)/*.mk
+
+# This is for user defined plugins, global to all projects
+MK_USER_PLUGINS_DIR := $(or ${MK_USER_PLUGINS_DIR},${MK_USER_PLUGINS_DIR},)
+-include $(MK_USER_PLUGINS_DIR)/*.mk
 
 ################################################################################
 ### Image rules
