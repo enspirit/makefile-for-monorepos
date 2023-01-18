@@ -227,10 +227,10 @@ define make-standard-rules
 $1.tests: $1.tests.unit $1.tests.integration
 
 # Placeholder for the running of unit tests, you can override that in your component's makefile.mk
-$1.tests.unit:: $1.image
+$1.tests.unit::
 
 # Placeholder for the running of integration tests, you can override that in your component's makefile.mk
-$1.tests.integration:: $1.image
+$1.tests.integration::
 
 endef
 $(foreach component,$(DOCKER_COMPONENTS),$(eval $(call make-standard-rules,$(component))))
