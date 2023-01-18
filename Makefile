@@ -23,7 +23,7 @@
 ################################################################################
 
 ## Version of this Makefile
-MK_VERSION := 1.1.1
+MK_VERSION := 1.2.0
 ## Better defaults for make (thanks https://tech.davis-hansson.com/p/make/)
 SHELL := bash
 .ONESHELL:
