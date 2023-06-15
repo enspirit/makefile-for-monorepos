@@ -43,31 +43,32 @@ MAKEFLAGS += --no-builtin-rules
 .EXPORT_ALL_VARIABLES: ;
 
 # Docker registry to be used
-DOCKER_REGISTRY := $(or ${DOCKER_REGISTRY},${DOCKER_REGISTRY},docker.io)
+DOCKER_REGISTRY ?= docker.io
 
 # Specify which docker tag is to be used
-DOCKER_TAG := $(or ${DOCKER_TAG},${DOCKER_TAG},latest)
+DOCKER_TAG ?= latest
 
 # Which command is used to build docker images
-DOCKER_BUILD := $(or ${DOCKER_BUILD},${DOCKER_BUILD},docker build)
+DOCKER_BUILD ?= docker build
 
 # Docker build extra options for all builds (optional)
-DOCKER_BUILD_ARGS := $(or ${DOCKER_BUILD_ARGS},${DOCKER_BUILD_ARGS},)
+DOCKER_BUILD_ARGS ?=
 
 # Which command is used to scan docker images
-DOCKER_SCAN := $(or ${DOCKER_SCAN},${DOCKER_SCAN},docker scan)
+DOCKER_SCAN ?= docker scan
 
 # Docker scan extra options
-DOCKER_SCAN_ARGS := $(or ${DOCKER_SCAN_ARGS},${DOCKER_SCAN_ARGS},)
+DOCKER_SCAN_ARGS ?=
 
 # Docker scan extra options
-DOCKER_SCAN_FAIL_ON_ERR := $(or ${DOCKER_SCAN_FAIL_ON_ERR},${DOCKER_SCAN_FAIL_ON_ERR},true)
+DOCKER_SCAN_FAIL_ON_ERR ?= true
 
 # Which command is used for docker-compose (you can switch from 'docker-compose' to 'docker compose')
 # by overriding this in your config.mk
-DOCKER_COMPOSE := $(or ${DOCKER_COMPOSE},${DOCKER_COMPOSE},docker-compose)
+DOCKER_COMPOSE ?= docker compose
 
 ## The list of components being docker based (= component folder includes a Dockerfile)
+DOCKER_COMPONENTS ?=
 DOCKER_COMPONENTS := $(DOCKER_COMPONENTS) $(shell find * -maxdepth 1 -mindepth 1 -name "Dockerfile" -exec dirname {} \;)
 
 ## The list of services defined in the (enabled) docker-compose files
@@ -90,11 +91,11 @@ config.mk:
 ###
 
 # This is intended for project plugins, stored inside the project itself
-MK_PLUGINS_DIR := $(or ${MK_PLUGINS_DIR},${MK_PLUGINS_DIR},.mkplugins)
+MK_PLUGINS_DIR ?= .mkplugins
 -include $(MK_PLUGINS_DIR)/*.mk
 
 # This is for user defined plugins, global to all projects
-MK_USER_PLUGINS_DIR := $(or ${MK_USER_PLUGINS_DIR},${MK_USER_PLUGINS_DIR},)
+MK_USER_PLUGINS_DIR ?=
 -include $(MK_USER_PLUGINS_DIR)/*.mk
 
 ################################################################################
@@ -143,15 +144,20 @@ endif
 ### $2: Dockerfile
 ### $3: docker build context
 ###
-define make-image-rules
-
+define make-image-var-rules
 .PHONY: $1.clean $1.image $.image.push $1.image.pull $1.image.scan
 
-$1_DOCKER_FILE := $(or ${$1_DOCKER_FILE},${$1_DOCKER_FILE},$2)
-$1_DOCKER_CONTEXT := $(or ${$1_DOCKER_CONTEXT},${$1_DOCKER_CONTEXT},$3)
-$1_PREREQUISITES := $$(or $${$1_PREREQUISITES},$${$1_PREREQUISITES},$$(call find-component-prerequisites,$${$1_DOCKER_FILE},$${$1_DOCKER_CONTEXT}))
-$1_DEPS := $(or ${$1_DEPS},${$1_DEPS},)
+$1_DOCKER_BUILD_ARGS ?=
+$1_DOCKER_FILE ?= $2
+$1_DOCKER_CONTEXT ?= $3
+$1_DEPS ?=
+$1_IMAGE_PULL_FORCE ?=
+$1_SHELL ?= bash
+$1_PREREQUISITES ?= $$(call find-component-prerequisites,$${$1_DOCKER_FILE},$${$1_DOCKER_CONTEXT})
+endef
+$(foreach component,$(DOCKER_COMPONENTS),$(eval $(call make-image-var-rules,$(component),$(component)/Dockerfile,$(component))))
 
+define make-image-rules
 # Remove docker build assets
 $1.clean::
 	@rm -rf .build/$1
@@ -188,7 +194,6 @@ $1.image.push: .build/$1/Dockerfile.pushed
 
 # Pull the latest image version from the private repository
 $1.image.pull: .build/$1/Dockerfile.pulled
-$1_IMAGE_PULL_FORCE := $(or ${$1_IMAGE_PULL_FORCE},${$1_IMAGE_PULL_FORCE},)
 .build/$1/Dockerfile.pulled:
 	@mkdir -p .build/$1/
 	@echo
