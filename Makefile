@@ -68,6 +68,7 @@ DOCKER_SCAN_FAIL_ON_ERR ?= true
 DOCKER_COMPOSE ?= docker compose
 
 ## The list of components being docker based (= component folder includes a Dockerfile)
+DOCKER_COMPONENTS ?=
 DOCKER_COMPONENTS := $(DOCKER_COMPONENTS) $(shell find * -maxdepth 1 -mindepth 1 -name "Dockerfile" -exec dirname {} \;)
 
 ## The list of services defined in the (enabled) docker-compose files
@@ -90,11 +91,11 @@ config.mk:
 ###
 
 # This is intended for project plugins, stored inside the project itself
-MK_PLUGINS_DIR := $(or ${MK_PLUGINS_DIR},${MK_PLUGINS_DIR},.mkplugins)
+MK_PLUGINS_DIR ?= .mkplugins
 -include $(MK_PLUGINS_DIR)/*.mk
 
 # This is for user defined plugins, global to all projects
-MK_USER_PLUGINS_DIR := $(or ${MK_USER_PLUGINS_DIR},${MK_USER_PLUGINS_DIR},)
+MK_USER_PLUGINS_DIR ?=
 -include $(MK_USER_PLUGINS_DIR)/*.mk
 
 ################################################################################
