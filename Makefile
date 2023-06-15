@@ -43,29 +43,29 @@ MAKEFLAGS += --no-builtin-rules
 .EXPORT_ALL_VARIABLES: ;
 
 # Docker registry to be used
-DOCKER_REGISTRY := $(or ${DOCKER_REGISTRY},${DOCKER_REGISTRY},docker.io)
+DOCKER_REGISTRY ?= docker.io
 
 # Specify which docker tag is to be used
-DOCKER_TAG := $(or ${DOCKER_TAG},${DOCKER_TAG},latest)
+DOCKER_TAG ?= latest
 
 # Which command is used to build docker images
-DOCKER_BUILD := $(or ${DOCKER_BUILD},${DOCKER_BUILD},docker build)
+DOCKER_BUILD ?= docker build
 
 # Docker build extra options for all builds (optional)
-DOCKER_BUILD_ARGS := $(or ${DOCKER_BUILD_ARGS},${DOCKER_BUILD_ARGS},)
+DOCKER_BUILD_ARGS ?=
 
 # Which command is used to scan docker images
-DOCKER_SCAN := $(or ${DOCKER_SCAN},${DOCKER_SCAN},docker scan)
+DOCKER_SCAN ?= docker scan
 
 # Docker scan extra options
-DOCKER_SCAN_ARGS := $(or ${DOCKER_SCAN_ARGS},${DOCKER_SCAN_ARGS},)
+DOCKER_SCAN_ARGS ?=
 
 # Docker scan extra options
-DOCKER_SCAN_FAIL_ON_ERR := $(or ${DOCKER_SCAN_FAIL_ON_ERR},${DOCKER_SCAN_FAIL_ON_ERR},true)
+DOCKER_SCAN_FAIL_ON_ERR ?= true
 
 # Which command is used for docker-compose (you can switch from 'docker-compose' to 'docker compose')
 # by overriding this in your config.mk
-DOCKER_COMPOSE := $(or ${DOCKER_COMPOSE},${DOCKER_COMPOSE},docker-compose)
+DOCKER_COMPOSE ?= docker compose
 
 ## The list of components being docker based (= component folder includes a Dockerfile)
 DOCKER_COMPONENTS := $(DOCKER_COMPONENTS) $(shell find * -maxdepth 1 -mindepth 1 -name "Dockerfile" -exec dirname {} \;)
