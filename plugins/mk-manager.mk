@@ -9,11 +9,11 @@
 # Which github repo hosts the Makefile
 # You can fork us on github, override this variable in your config.mk
 # and get updates from your own clone.
-MK_GH_REPO := $(or ${MK_GH_REPO},${MK_GH_REPO},enspirit/makefile-for-monorepos)
+MK_GH_REPO ?= enspirit/makefile-for-monorepos
 
 # By overriding this variable to 'true' you'll get upgrades from the
 # master branch rather than the latest release (use at your own risk)
-MK_USE_CANARY := $(or ${MK_USE_CANARY},${MK_USE_CANARY},false)
+MK_USE_CANARY ?= false
 
 MK_GH_CONTENTS_API := https://api.github.com/repos/$(MK_GH_REPO)/contents
 MK_GH_LATEST_RELEASE := https://api.github.com/repos/$(MK_GH_REPO)/releases/latest

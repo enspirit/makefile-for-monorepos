@@ -6,7 +6,7 @@
 ### e.g. make print-DOCKER_COMPONENTS
 print-% : ; $(info $($*)) @true
 
-CSV_DELIMITER := $(or ${CSV_DELIMITER},${CSV_DELIMITER},|)
+CSV_DELIMITER ?= |
 
 inspect: inspect.header $(addsuffix .inspect,$(DOCKER_COMPONENTS))
 inspect.header:

@@ -13,7 +13,7 @@ dummy: $(addsuffix .dummy.example,$(DOCKER_COMPONENTS))
 # - {component}.dummy.example: does something cool
 define make-dummy-targets
 
-.PHONY: $#.dummy.example
+.PHONY: $1.dummy.example
 
 $1.dummy.example:
 	@echo "Some dummy example for $1"
