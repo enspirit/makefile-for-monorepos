@@ -2,6 +2,9 @@ services:
 
   api:
     env_file: ./api/env/devel.env
+    volumes:
+      - ./api:/home/app
+      - /home/app/node_modules
 
   frontend:
     ports:

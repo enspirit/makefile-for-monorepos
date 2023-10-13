@@ -1,5 +1,7 @@
 FROM monorepo/base
 
+WORKDIR /home/app
+
 COPY package.json .
 
 RUN npm install
